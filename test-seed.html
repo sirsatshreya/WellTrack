@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>seed</title></head><body>
+<script src="js/storage.js"></script>
+<script src="js/burnout.js"></script>
+<script>
+// Seed profile + 20 days of varied entries, then open the app
+localStorage.clear();
+Storage.saveProfile({ name: 'Priya Sharma', course: 'B.Tech CSE', year: '3rd Year', studyGoal: 5, createdAt: Date.now() });
+const rand = (a,b)=>Math.round((a+Math.random()*(b-a))*2)/2;
+for (let i = 19; i >= 0; i--) {
+  if (i === 5 || i === 12) continue; // skip days to test gaps
+  const e = {
+    date: Storage.todayStr(-i),
+    mood: Math.max(1, Math.min(5, Math.round(3 + Math.sin(i/3)*1.6))),
+    stress: Math.max(1, Math.min(10, Math.round(5 + Math.cos(i/2.5)*3))),
+    motivation: Math.max(1, Math.min(10, Math.round(6 + Math.sin(i/4)*3))),
+    sleep: rand(4.5, 9),
+    study: rand(2, 11),
+    notes: i % 4 === 0 ? 'Exam prep was intense today, felt tired after DSA practice.' : ''
+  };
+  e.score = Burnout.computeScore(e);
+  e.category = Burnout.categorize(e.score);
+  Storage.upsertEntry(e);
+}
+location.replace('index.html');
+</script>
+</body></html>
