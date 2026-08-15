@@ -1,6 +1,7 @@
 /* ============================================================
    WellTrack — app.js
    Black + Purple Luxury UI Controller
+   HTML-compatible version
    ============================================================ */
 
 (() => {
@@ -10,8 +11,7 @@
      DOM HELPERS
      ========================================================== */
 
-  const $ = (selector) =>
-    document.querySelector(selector);
+  const $ = (selector) => document.querySelector(selector);
 
   const $$ = (selector) =>
     Array.from(document.querySelectorAll(selector));
@@ -48,7 +48,7 @@
 
 
   /* ==========================================================
-     WELLTRACK BLACK + PURPLE THEME
+     WELLTRACK THEME
      ========================================================== */
 
   function applyWellTrackTheme() {
@@ -58,16 +58,10 @@
       'dark'
     );
 
-    /*
-     * Keep compatibility with the existing theme toggle
-     * if it still exists in the HTML.
-     */
-
     const themeIcon = $('#theme-toggle i');
 
     if (themeIcon) {
-      themeIcon.className =
-        'fa-solid fa-moon';
+      themeIcon.className = 'fa-solid fa-moon';
     }
 
     renderDashboard();
@@ -82,41 +76,21 @@
   function chartColors() {
 
     return {
-
-      /* Main purple */
       primary: '#9b5cff',
-
-      /* Bright luxury purple */
       purple: '#c084fc',
-
-      /* Deep purple */
       purpleDark: '#6d28d9',
-
-      /* Soft lavender */
       lavender: '#d8b4fe',
-
-      /* Success */
       success: '#a78bfa',
-
-      /* Warning */
       warning: '#c084fc',
-
-      /* High risk */
       danger: '#f472b6',
 
-      /* Text */
       text: '#aaa3b8',
-
       textBright: '#f5f3f7',
 
-      /* Grid */
       grid: 'rgba(168, 85, 247, 0.10)',
 
-      /* Card surface */
       surface: '#111116',
-
       surface2: '#1a1720',
-
       surface3: '#241d2d',
 
       border: 'rgba(168, 85, 247, 0.20)'
@@ -134,24 +108,24 @@
     icon = 'fa-circle-info'
   ) {
 
-    const container =
-      $('#toast-container');
+    const container = $('#toast-container');
 
     if (!container) return;
 
-    const element =
-      document.createElement('div');
+    const element = document.createElement('div');
 
-    element.className =
-      `toast ${type}`;
+    element.className = `toast ${type}`;
 
     element.innerHTML = `
       <i class="fa-solid ${icon}"></i>
       <span></span>
     `;
 
-    element.querySelector('span')
-      .textContent = message;
+    const textElement = element.querySelector('span');
+
+    if (textElement) {
+      textElement.textContent = message;
+    }
 
     container.appendChild(element);
 
@@ -222,15 +196,25 @@
 
   /* ==========================================================
      PROFILE / ONBOARDING
+     
+     IMPORTANT:
+     HTML contains:
+       ob-name
+       ob-email
+       ob-course
+       ob-year
+
+     There is NO:
+       ob-goal
+
+     Therefore we do NOT access ob-goal.
      ========================================================== */
 
   function checkProfile() {
 
-    const profile =
-      Storage.getProfile();
+    const profile = Storage.getProfile();
 
-    const overlay =
-      $('#onboarding-overlay');
+    const overlay = $('#onboarding-overlay');
 
     if (!overlay) {
       return profile;
@@ -238,8 +222,10 @@
 
     if (!profile) {
       overlay.classList.remove('hidden');
+      overlay.setAttribute('aria-hidden', 'false');
     } else {
       overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden', 'true');
     }
 
     return profile;
@@ -248,8 +234,11 @@
 
   function bindProfile() {
 
-    const onboardingForm =
-      $('#onboarding-form');
+    /* ========================================================
+       ONBOARDING FORM
+       ======================================================== */
+
+    const onboardingForm = $('#onboarding-form');
 
     if (onboardingForm) {
 
@@ -259,32 +248,120 @@
 
           event.preventDefault();
 
+
+          const nameInput = $('#ob-name');
+          const emailInput = $('#ob-email');
+          const courseInput = $('#ob-course');
+          const yearInput = $('#ob-year');
+
+
+          /* Safety check */
+          if (
+            !nameInput ||
+            !emailInput ||
+            !courseInput ||
+            !yearInput
+          ) {
+
+            console.error(
+              'WellTrack: onboarding HTML fields are missing.'
+            );
+
+            toast(
+              'Profile form is missing required fields.',
+              'danger',
+              'fa-triangle-exclamation'
+            );
+
+            return;
+          }
+
+
           const profile = {
 
             name:
-              $('#ob-name').value.trim(),
+              nameInput.value.trim(),
+
+            email:
+              emailInput.value.trim(),
 
             course:
-              $('#ob-course').value.trim(),
+              courseInput.value.trim(),
 
             year:
-              $('#ob-year').value,
-
-            studyGoal:
-              parseFloat(
-                $('#ob-goal').value
-              ) || 4,
+              yearInput.value,
 
             createdAt:
               Date.now()
           };
 
 
+          /* Basic validation */
+
+          if (!profile.name) {
+
+            toast(
+              'Please enter your name.',
+              'warning',
+              'fa-user'
+            );
+
+            nameInput.focus();
+
+            return;
+          }
+
+
+          if (!profile.email) {
+
+            toast(
+              'Please enter your email address.',
+              'warning',
+              'fa-envelope'
+            );
+
+            emailInput.focus();
+
+            return;
+          }
+
+
+          if (!profile.course) {
+
+            toast(
+              'Please enter your course or program.',
+              'warning',
+              'fa-graduation-cap'
+            );
+
+            courseInput.focus();
+
+            return;
+          }
+
+
+          if (!profile.year) {
+
+            toast(
+              'Please select your academic year.',
+              'warning',
+              'fa-school'
+            );
+
+            yearInput.focus();
+
+            return;
+          }
+
+
           Storage.saveProfile(profile);
 
 
           $('#onboarding-overlay')
-            .classList.add('hidden');
+            ?.classList.add('hidden');
+
+          $('#onboarding-overlay')
+            ?.setAttribute('aria-hidden', 'true');
 
 
           toast(
@@ -300,10 +377,11 @@
     }
 
 
-    /* ---------- Profile button ---------- */
+    /* ========================================================
+       PROFILE BUTTON
+       ======================================================== */
 
-    const profileButton =
-      $('#profile-btn');
+    const profileButton = $('#profile-btn');
 
     if (profileButton) {
 
@@ -311,35 +389,62 @@
         'click',
         () => {
 
-          const profile =
-            Storage.getProfile();
+          const profile = Storage.getProfile();
 
           if (!profile) return;
 
-          $('#pf-name').value =
-            profile.name || '';
 
-          $('#pf-course').value =
-            profile.course || '';
-
-          $('#pf-year').value =
-            profile.year || '';
-
-          $('#pf-goal').value =
-            profile.studyGoal || 4;
+          const nameInput = $('#pf-name');
+          const emailInput = $('#pf-email');
+          const courseInput = $('#pf-course');
+          const yearInput = $('#pf-year');
 
 
-          $('#profile-overlay')
-            .classList.remove('hidden');
+          if (nameInput) {
+            nameInput.value =
+              profile.name || '';
+          }
+
+
+          if (emailInput) {
+            emailInput.value =
+              profile.email || '';
+          }
+
+
+          if (courseInput) {
+            courseInput.value =
+              profile.course || '';
+          }
+
+
+          if (yearInput) {
+            yearInput.value =
+              profile.year || '';
+          }
+
+
+          const overlay = $('#profile-overlay');
+
+          if (overlay) {
+
+            overlay.classList.remove('hidden');
+
+            overlay.setAttribute(
+              'aria-hidden',
+              'false'
+            );
+          }
         }
       );
     }
 
 
-    /* ---------- Close profile ---------- */
+    /* ========================================================
+       CLOSE PROFILE
+       ======================================================== */
 
-    const profileClose =
-      $('#profile-close');
+    const profileClose = $('#profile-close');
 
     if (profileClose) {
 
@@ -347,15 +452,26 @@
         'click',
         () => {
 
-          $('#profile-overlay')
-            .classList.add('hidden');
+          const overlay = $('#profile-overlay');
+
+          if (!overlay) return;
+
+          overlay.classList.add('hidden');
+
+          overlay.setAttribute(
+            'aria-hidden',
+            'true'
+          );
         }
       );
     }
 
 
-    const profileOverlay =
-      $('#profile-overlay');
+    /* ========================================================
+       CLOSE PROFILE WHEN CLICKING OUTSIDE
+       ======================================================== */
+
+    const profileOverlay = $('#profile-overlay');
 
     if (profileOverlay) {
 
@@ -363,23 +479,25 @@
         'click',
         event => {
 
-          if (
-            event.target ===
-            profileOverlay
-          ) {
+          if (event.target === profileOverlay) {
 
-            profileOverlay
-              .classList.add('hidden');
+            profileOverlay.classList.add('hidden');
+
+            profileOverlay.setAttribute(
+              'aria-hidden',
+              'true'
+            );
           }
         }
       );
     }
 
 
-    /* ---------- Update profile ---------- */
+    /* ========================================================
+       UPDATE PROFILE
+       ======================================================== */
 
-    const profileForm =
-      $('#profile-form');
+    const profileForm = $('#profile-form');
 
     if (profileForm) {
 
@@ -389,34 +507,124 @@
 
           event.preventDefault();
 
+
           const profile =
             Storage.getProfile() || {};
 
 
+          const nameInput = $('#pf-name');
+          const emailInput = $('#pf-email');
+          const courseInput = $('#pf-course');
+          const yearInput = $('#pf-year');
+
+
+          if (
+            !nameInput ||
+            !emailInput ||
+            !courseInput ||
+            !yearInput
+          ) {
+
+            console.error(
+              'WellTrack: profile HTML fields are missing.'
+            );
+
+            toast(
+              'Profile form is missing required fields.',
+              'danger',
+              'fa-triangle-exclamation'
+            );
+
+            return;
+          }
+
+
           profile.name =
-            $('#pf-name')
-              .value
-              .trim();
+            nameInput.value.trim();
+
+
+          profile.email =
+            emailInput.value.trim();
+
 
           profile.course =
-            $('#pf-course')
-              .value
-              .trim();
+            courseInput.value.trim();
+
 
           profile.year =
-            $('#pf-year').value;
+            yearInput.value;
 
-          profile.studyGoal =
-            parseFloat(
-              $('#pf-goal').value
-            ) || 4;
+
+          if (!profile.name) {
+
+            toast(
+              'Name cannot be empty.',
+              'warning',
+              'fa-user'
+            );
+
+            nameInput.focus();
+
+            return;
+          }
+
+
+          if (!profile.email) {
+
+            toast(
+              'Email cannot be empty.',
+              'warning',
+              'fa-envelope'
+            );
+
+            emailInput.focus();
+
+            return;
+          }
+
+
+          if (!profile.course) {
+
+            toast(
+              'Course cannot be empty.',
+              'warning',
+              'fa-graduation-cap'
+            );
+
+            courseInput.focus();
+
+            return;
+          }
+
+
+          if (!profile.year) {
+
+            toast(
+              'Please select your academic year.',
+              'warning',
+              'fa-school'
+            );
+
+            yearInput.focus();
+
+            return;
+          }
 
 
           Storage.saveProfile(profile);
 
 
-          $('#profile-overlay')
-            .classList.add('hidden');
+          const overlay = $('#profile-overlay');
+
+          if (overlay) {
+
+            overlay.classList.add('hidden');
+
+            overlay.setAttribute(
+              'aria-hidden',
+              'true'
+            );
+          }
 
 
           toast(
@@ -432,10 +640,11 @@
     }
 
 
-    /* ---------- Reset data ---------- */
+    /* ========================================================
+       RESET DATA
+       ======================================================== */
 
-    const resetButton =
-      $('#reset-data-btn');
+    const resetButton = $('#reset-data-btn');
 
     if (resetButton) {
 
@@ -448,7 +657,9 @@
               'This will permanently delete all WellTrack data. Continue?'
             );
 
+
           if (!confirmed) return;
+
 
           Storage.resetAll();
 
@@ -465,8 +676,7 @@
 
   function prepareCheckinForm() {
 
-    const dateLabel =
-      $('#checkin-date-label');
+    const dateLabel = $('#checkin-date-label');
 
     if (dateLabel) {
 
@@ -483,15 +693,13 @@
     }
 
 
-    const today =
-      Storage.todayStr();
+    const today = Storage.todayStr();
 
     const existing =
       Storage.getEntryByDate(today);
 
 
-    const banner =
-      $('#already-checked-banner');
+    const banner = $('#already-checked-banner');
 
     if (banner) {
 
@@ -502,15 +710,28 @@
     }
 
 
-    if (!existing) return;
+    if (!existing) {
+
+      /*
+       * No existing check-in.
+       * Leave the default HTML values alone.
+       */
+
+      highlightMood();
+
+      return;
+    }
 
 
-    /* ---------- Mood ---------- */
+    /* ========================================================
+       MOOD
+       ======================================================== */
 
     const moodRadio =
       document.querySelector(
         `input[name="mood"][value="${existing.mood}"]`
       );
+
 
     if (moodRadio) {
 
@@ -520,24 +741,32 @@
     }
 
 
-    /* ---------- Sliders ---------- */
+    /* ========================================================
+       STRESS
+       ======================================================== */
 
-    const stress =
-      $('#in-stress');
+    const stress = $('#in-stress');
 
-    const stressOutput =
-      $('#out-stress');
+    const stressOutput = $('#out-stress');
+
 
     if (stress) {
+
       stress.value =
         existing.stress;
     }
 
+
     if (stressOutput) {
-      stressOutput.value =
+
+      stressOutput.textContent =
         existing.stress;
     }
 
+
+    /* ========================================================
+       MOTIVATION
+       ======================================================== */
 
     const motivation =
       $('#in-motivation');
@@ -545,45 +774,55 @@
     const motivationOutput =
       $('#out-motivation');
 
+
     if (motivation) {
+
       motivation.value =
         existing.motivation;
     }
 
+
     if (motivationOutput) {
-      motivationOutput.value =
+
+      motivationOutput.textContent =
         existing.motivation;
     }
 
 
-    /* ---------- Sleep ---------- */
+    /* ========================================================
+       SLEEP
+       ======================================================== */
 
-    const sleep =
-      $('#in-sleep');
+    const sleep = $('#in-sleep');
 
     if (sleep) {
+
       sleep.value =
         existing.sleep;
     }
 
 
-    /* ---------- Study ---------- */
+    /* ========================================================
+       STUDY
+       ======================================================== */
 
-    const study =
-      $('#in-study');
+    const study = $('#in-study');
 
     if (study) {
+
       study.value =
         existing.study;
     }
 
 
-    /* ---------- Notes ---------- */
+    /* ========================================================
+       NOTES
+       ======================================================== */
 
-    const notes =
-      $('#in-notes');
+    const notes = $('#in-notes');
 
     if (notes) {
+
       notes.value =
         existing.notes || '';
     }
@@ -599,7 +838,7 @@
 
       option.classList.toggle(
         'selected',
-        input && input.checked
+        !!(input && input.checked)
       );
 
     });
@@ -608,8 +847,7 @@
 
   function bindCheckin() {
 
-    const moodRow =
-      $('#mood-row');
+    const moodRow = $('#mood-row');
 
     if (moodRow) {
 
@@ -620,11 +858,10 @@
     }
 
 
-    const stress =
-      $('#in-stress');
+    const stress = $('#in-stress');
 
-    const stressOutput =
-      $('#out-stress');
+    const stressOutput = $('#out-stress');
+
 
     if (stress && stressOutput) {
 
@@ -632,7 +869,7 @@
         'input',
         event => {
 
-          stressOutput.value =
+          stressOutput.textContent =
             event.target.value;
         }
       );
@@ -645,6 +882,7 @@
     const motivationOutput =
       $('#out-motivation');
 
+
     if (
       motivation &&
       motivationOutput
@@ -654,15 +892,14 @@
         'input',
         event => {
 
-          motivationOutput.value =
+          motivationOutput.textContent =
             event.target.value;
         }
       );
     }
 
 
-    const form =
-      $('#checkin-form');
+    const form = $('#checkin-form');
 
     if (!form) return;
 
@@ -692,6 +929,44 @@
         }
 
 
+        const stressInput =
+          $('#in-stress');
+
+        const motivationInput =
+          $('#in-motivation');
+
+        const sleepInput =
+          $('#in-sleep');
+
+        const studyInput =
+          $('#in-study');
+
+        const notesInput =
+          $('#in-notes');
+
+
+        if (
+          !stressInput ||
+          !motivationInput ||
+          !sleepInput ||
+          !studyInput ||
+          !notesInput
+        ) {
+
+          console.error(
+            'WellTrack: one or more check-in fields are missing.'
+          );
+
+          toast(
+            'Some check-in fields are missing from the HTML.',
+            'danger',
+            'fa-triangle-exclamation'
+          );
+
+          return;
+        }
+
+
         const entry = {
 
           date:
@@ -705,37 +980,38 @@
 
           stress:
             parseInt(
-              $('#in-stress').value,
+              stressInput.value,
               10
             ),
 
           motivation:
             parseInt(
-              $('#in-motivation').value,
+              motivationInput.value,
               10
             ),
 
           sleep:
             parseFloat(
-              $('#in-sleep').value
+              sleepInput.value
             ),
 
           study:
             parseFloat(
-              $('#in-study').value
+              studyInput.value
             ),
 
           notes:
-            $('#in-notes')
-              .value
-              .trim()
+            notesInput.value.trim()
         };
 
 
-        /* ---------- Burnout ---------- */
+        /* ====================================================
+           BURNOUT
+           ==================================================== */
 
         entry.score =
           Burnout.computeScore(entry);
+
 
         entry.category =
           Burnout.categorize(
@@ -743,12 +1019,16 @@
           );
 
 
-        /* ---------- Save ---------- */
+        /* ====================================================
+           SAVE
+           ==================================================== */
 
         Storage.upsertEntry(entry);
 
 
-        /* ---------- Achievements ---------- */
+        /* ====================================================
+           ACHIEVEMENTS
+           ==================================================== */
 
         const result =
           Achievements.evaluate(
@@ -756,19 +1036,27 @@
           );
 
 
-        result.newlyEarned
-          .forEach(badge => {
+        if (
+          result &&
+          Array.isArray(result.newlyEarned)
+        ) {
 
-            toast(
-              `Badge unlocked: ${badge.name}!`,
-              'success',
-              badge.icon
-            );
+          result.newlyEarned
+            .forEach(badge => {
 
-          });
+              toast(
+                `Badge unlocked: ${badge.name}!`,
+                'success',
+                badge.icon
+              );
+
+            });
+        }
 
 
-        /* ---------- Result ---------- */
+        /* ====================================================
+           RESULT
+           ==================================================== */
 
         showCheckinResult(entry);
 
@@ -796,7 +1084,9 @@
         const banner =
           $('#already-checked-banner');
 
+
         if (banner) {
+
           banner.classList.remove(
             'hidden'
           );
@@ -815,8 +1105,7 @@
 
   function showCheckinResult(entry) {
 
-    const box =
-      $('#checkin-result');
+    const box = $('#checkin-result');
 
     if (!box) return;
 
@@ -848,7 +1137,7 @@
       </div>
 
       <span class="category-badge ${categoryClass}">
-        ${entry.category}
+        ${escapeHtml(entry.category)}
       </span>
 
       <p
@@ -884,33 +1173,49 @@
 
   function renderDashboard() {
 
+    if (
+      typeof Storage === 'undefined' ||
+      typeof Burnout === 'undefined' ||
+      typeof Achievements === 'undefined'
+    ) {
+      return;
+    }
+
+
     const profile =
       Storage.getProfile();
 
     const entries =
       Storage.getEntries();
 
+
     const latest =
       entries[0] || null;
 
+
     const today =
       Storage.todayStr();
+
 
     const todayEntry =
       entries.find(
         entry => entry.date === today
       ) || null;
 
+
     const shown =
       todayEntry || latest;
 
 
-    /* ---------- Greeting ---------- */
+    /* ========================================================
+       GREETING
+       ======================================================== */
 
     if (profile) {
 
       const hour =
         new Date().getHours();
+
 
       const greeting =
         hour < 12
@@ -928,6 +1233,7 @@
       const greetingElement =
         $('#greeting-text');
 
+
       if (greetingElement) {
 
         greetingElement.textContent =
@@ -937,6 +1243,7 @@
 
       const subtitle =
         $('#greeting-sub');
+
 
       if (subtitle) {
 
@@ -951,10 +1258,13 @@
     }
 
 
-    /* ---------- Risk Alert ---------- */
+    /* ========================================================
+       RISK ALERT
+       ======================================================== */
 
     const alertBox =
       $('#risk-alert');
+
 
     if (alertBox) {
 
@@ -965,6 +1275,7 @@
 
         alertBox.className =
           'risk-alert high';
+
 
         alertBox.innerHTML = `
           <i class="fa-solid fa-triangle-exclamation"></i>
@@ -981,6 +1292,7 @@
         alertBox.className =
           'risk-alert moderate';
 
+
         alertBox.innerHTML = `
           <i class="fa-solid fa-circle-exclamation"></i>
           Moderate burnout risk detected.
@@ -992,11 +1304,15 @@
 
         alertBox.className =
           'risk-alert hidden';
+
+        alertBox.innerHTML = '';
       }
     }
 
 
-    /* ---------- Score ---------- */
+    /* ========================================================
+       SCORE
+       ======================================================== */
 
     const scoreElement =
       $('#burnout-score-value');
@@ -1011,6 +1327,7 @@
     if (shown) {
 
       if (scoreElement) {
+
         scoreElement.textContent =
           shown.score;
       }
@@ -1020,6 +1337,7 @@
 
         categoryElement.textContent =
           shown.category;
+
 
         categoryElement.className =
           'category-badge ' +
@@ -1040,7 +1358,9 @@
     } else {
 
       if (scoreElement) {
-        scoreElement.textContent = '–';
+
+        scoreElement.textContent =
+          '–';
       }
 
 
@@ -1055,6 +1375,7 @@
 
 
       if (explainElement) {
+
         explainElement.textContent =
           'Complete your first check-in to see your burnout risk.';
       }
@@ -1066,7 +1387,9 @@
     );
 
 
-    /* ---------- Snapshot ---------- */
+    /* ========================================================
+       SNAPSHOT
+       ======================================================== */
 
     setText(
       '#snap-mood',
@@ -1075,12 +1398,14 @@
         : '–'
     );
 
+
     setText(
       '#snap-stress',
       shown
         ? `${shown.stress}/10`
         : '–'
     );
+
 
     setText(
       '#snap-sleep',
@@ -1089,12 +1414,14 @@
         : '–'
     );
 
+
     setText(
       '#snap-study',
       shown
         ? `${shown.study} h`
         : '–'
     );
+
 
     setText(
       '#snap-motivation',
@@ -1103,16 +1430,20 @@
         : '–'
     );
 
+
     setText(
       '#snap-total',
       entries.length
     );
 
 
-    /* ---------- Recommendations ---------- */
+    /* ========================================================
+       RECOMMENDATIONS
+       ======================================================== */
 
     const recommendationList =
       $('#recommendations-list');
+
 
     if (recommendationList) {
 
@@ -1123,44 +1454,66 @@
         );
 
 
-      recommendationList.innerHTML =
-        recommendations
-          .map(item => `
-            <li class="rec-item ${item.level}">
-              <i class="fa-solid ${item.icon}"></i>
-              <span>${escapeHtml(item.text)}</span>
-            </li>
-          `)
-          .join('');
+      if (
+        Array.isArray(recommendations) &&
+        recommendations.length
+      ) {
+
+        recommendationList.innerHTML =
+          recommendations
+            .map(item => `
+              <li class="rec-item ${escapeHtml(item.level || 'info')}">
+                <i class="fa-solid ${escapeHtml(item.icon || 'fa-circle-info')}"></i>
+                <span>${escapeHtml(item.text)}</span>
+              </li>
+            `)
+            .join('');
+
+      } else {
+
+        recommendationList.innerHTML = `
+          <li class="rec-item info">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Start your first check-in to get personalized advice.</span>
+          </li>
+        `;
+      }
     }
 
 
-    /* ---------- Streak ---------- */
+    /* ========================================================
+       STREAK
+       ======================================================== */
 
     const currentStreak =
       Achievements.currentStreak(
         entries
       );
 
+
     setText(
       '#streak-count',
       currentStreak
     );
+
 
     setText(
       '#p-current-streak',
       currentStreak
     );
 
+
     setText(
       '#p-longest-streak',
       Achievements.longestStreak(entries)
     );
 
+
     setText(
       '#p-total-checkins',
       entries.length
     );
+
 
     setText(
       '#p-consistency',
@@ -1171,12 +1524,16 @@
     );
 
 
-    /* ---------- Week ---------- */
+    /* ========================================================
+       WEEK
+       ======================================================== */
 
     renderWeekDots(entries);
 
 
-    /* ---------- Mini trend ---------- */
+    /* ========================================================
+       MINI TREND
+       ======================================================== */
 
     renderMiniTrend(entries);
   }
@@ -1186,6 +1543,7 @@
 
     const container =
       $('#week-dots');
+
 
     if (!container) return;
 
@@ -1212,15 +1570,21 @@
     let html = '';
 
 
-    for (let i = 6; i >= 0; i--) {
+    for (
+      let i = 6;
+      i >= 0;
+      i--
+    ) {
 
       const date =
         Storage.todayStr(-i);
+
 
       const dateObject =
         new Date(
           date + 'T00:00:00'
         );
+
 
       const completed =
         dates.has(date);
@@ -1231,18 +1595,22 @@
           class="wd
             ${completed ? 'done' : ''}
             ${i === 0 ? 'today' : ''}"
-          title="${date}"
+          title="${escapeHtml(date)}"
         >
-          ${completed
-            ? '✓'
-            : dayNames[dateObject.getDay()]
+          ${
+            completed
+              ? '✓'
+              : dayNames[
+                  dateObject.getDay()
+                ]
           }
         </span>
       `;
     }
 
 
-    container.innerHTML = html;
+    container.innerHTML =
+      html;
   }
 
 
@@ -1255,7 +1623,18 @@
     const canvas =
       $('#gauge-chart');
 
+
     if (!canvas) return;
+
+
+    if (typeof Chart === 'undefined') {
+
+      console.warn(
+        'WellTrack: Chart.js is not loaded.'
+      );
+
+      return;
+    }
 
 
     const colors =
@@ -1267,15 +1646,23 @@
 
 
     if (score < 40) {
-      color = colors.success;
+
+      color =
+        colors.success;
+
     }
 
     else if (score < 65) {
-      color = colors.warning;
+
+      color =
+        colors.warning;
+
     }
 
     else {
-      color = colors.danger;
+
+      color =
+        colors.danger;
     }
 
 
@@ -1283,59 +1670,62 @@
 
 
     charts.gauge =
-      new Chart(canvas, {
+      new Chart(
+        canvas,
+        {
 
-        type: 'doughnut',
+          type: 'doughnut',
 
-        data: {
+          data: {
 
-          datasets: [{
+            datasets: [{
 
-            data: [
-              score,
-              100 - score
-            ],
+              data: [
+                score,
+                Math.max(0, 100 - score)
+              ],
 
-            backgroundColor: [
-              color,
-              'rgba(255,255,255,0.06)'
-            ],
+              backgroundColor: [
+                color,
+                'rgba(255,255,255,0.06)'
+              ],
 
-            borderWidth: 0,
+              borderWidth: 0,
 
-            borderRadius: 8
-          }]
-        },
-
-
-        options: {
-
-          rotation: -90,
-
-          circumference: 180,
-
-          cutout: '72%',
-
-          responsive: true,
-
-          maintainAspectRatio: false,
-
-          plugins: {
-
-            legend: {
-              display: false
-            },
-
-            tooltip: {
-              enabled: false
-            }
+              borderRadius: 8
+            }]
           },
 
-          animation: {
-            duration: 700
+
+          options: {
+
+            rotation: -90,
+
+            circumference: 180,
+
+            cutout: '72%',
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            plugins: {
+
+              legend: {
+                display: false
+              },
+
+              tooltip: {
+                enabled: false
+              }
+            },
+
+            animation: {
+              duration: 700
+            }
           }
         }
-      });
+      );
   }
 
 
@@ -1348,11 +1738,16 @@
     const canvas =
       $('#mini-trend-chart');
 
+
     if (!canvas) return;
+
+
+    if (typeof Chart === 'undefined') return;
 
 
     const colors =
       chartColors();
+
 
     const days =
       lastNDays(14);
@@ -1382,54 +1777,57 @@
 
 
     charts.mini =
-      new Chart(canvas, {
+      new Chart(
+        canvas,
+        {
 
-        type: 'line',
+          type: 'line',
 
-        data: {
+          data: {
 
-          labels:
-            days.map(shortLabel),
+            labels:
+              days.map(shortLabel),
 
-          datasets: [{
+            datasets: [{
 
-            label:
-              'Burnout score',
+              label:
+                'Burnout score',
 
-            data,
+              data,
 
-            borderColor:
-              colors.primary,
-
-            backgroundColor:
-              hexToRgba(
+              borderColor:
                 colors.primary,
-                0.14
-              ),
 
-            fill: true,
+              backgroundColor:
+                hexToRgba(
+                  colors.primary,
+                  0.14
+                ),
 
-            tension: 0.35,
+              fill: true,
 
-            spanGaps: true,
+              tension: 0.35,
 
-            pointRadius: 3,
+              spanGaps: true,
 
-            pointBackgroundColor:
-              colors.primary,
+              pointRadius: 3,
 
-            pointBorderWidth: 0
-          }]
-        },
+              pointBackgroundColor:
+                colors.primary,
+
+              pointBorderWidth: 0
+            }]
+          },
 
 
-        options:
-          baseLineOptions(
-            colors,
-            0,
-            100
-          )
-      });
+          options:
+            baseLineOptions(
+              colors,
+              0,
+              100
+            )
+        }
+      );
   }
 
 
@@ -1439,8 +1837,17 @@
 
   function renderAnalytics() {
 
+    if (
+      typeof Storage === 'undefined' ||
+      typeof Burnout === 'undefined'
+    ) {
+      return;
+    }
+
+
     const entries =
       Storage.getEntries();
+
 
     const empty =
       entries.length === 0;
@@ -1449,11 +1856,13 @@
     const emptyElement =
       $('#analytics-empty');
 
+
     const contentElement =
       $('#analytics-content');
 
 
     if (emptyElement) {
+
       emptyElement.classList.toggle(
         'hidden',
         !empty
@@ -1462,6 +1871,7 @@
 
 
     if (contentElement) {
+
       contentElement.classList.toggle(
         'hidden',
         empty
@@ -1469,7 +1879,24 @@
     }
 
 
-    if (empty) return;
+    if (empty) {
+
+      Object.keys(charts).forEach(
+        destroyChart
+      );
+
+      return;
+    }
+
+
+    if (typeof Chart === 'undefined') {
+
+      console.warn(
+        'WellTrack: Chart.js is not loaded.'
+      );
+
+      return;
+    }
 
 
     const colors =
@@ -1504,7 +1931,9 @@
           : null;
 
 
-    /* ---------- Summary ---------- */
+    /* ========================================================
+       SUMMARY
+       ======================================================== */
 
     const current =
       entries.filter(
@@ -1532,6 +1961,7 @@
     const currentAverage =
       Burnout.averages(current);
 
+
     const previousAverage =
       Burnout.averages(previous);
 
@@ -1549,85 +1979,96 @@
     destroyChart('burnout');
 
 
-    charts.burnout =
-      new Chart(
-        $('#chart-burnout'),
-        {
+    const burnoutCanvas =
+      $('#chart-burnout');
 
-          type: 'line',
 
-          data: {
+    if (burnoutCanvas) {
 
-            labels,
+      charts.burnout =
+        new Chart(
+          burnoutCanvas,
+          {
 
-            datasets: [{
+            type: 'line',
 
-              label:
-                'Burnout score',
+            data: {
 
-              data:
-                days.map(
-                  date =>
-                    value(
-                      date,
-                      'score'
-                    )
-                ),
+              labels,
 
-              borderColor:
-                colors.primary,
+              datasets: [{
 
-              backgroundColor:
-                hexToRgba(
+                label:
+                  'Burnout score',
+
+                data:
+                  days.map(
+                    date =>
+                      value(
+                        date,
+                        'score'
+                      )
+                  ),
+
+                borderColor:
                   colors.primary,
-                  0.12
-                ),
 
-              fill: true,
+                backgroundColor:
+                  hexToRgba(
+                    colors.primary,
+                    0.12
+                  ),
 
-              tension: 0.35,
+                fill: true,
 
-              spanGaps: true,
+                tension: 0.35,
 
-              pointRadius: 4,
+                spanGaps: true,
 
-              pointBackgroundColor:
-                days.map(date => {
+                pointRadius: 4,
 
-                  const score =
-                    value(
-                      date,
-                      'score'
-                    );
+                pointBackgroundColor:
+                  days.map(date => {
 
-                  if (score == null) {
-                    return colors.text;
-                  }
-
-                  if (score < 40) {
-                    return colors.success;
-                  }
-
-                  if (score < 65) {
-                    return colors.warning;
-                  }
-
-                  return colors.danger;
-                }),
-
-              pointBorderWidth: 0
-            }]
-          },
+                    const score =
+                      value(
+                        date,
+                        'score'
+                      );
 
 
-          options:
-            baseLineOptions(
-              colors,
-              0,
-              100
-            )
-        }
-      );
+                    if (score == null) {
+                      return colors.text;
+                    }
+
+
+                    if (score < 40) {
+                      return colors.success;
+                    }
+
+
+                    if (score < 65) {
+                      return colors.warning;
+                    }
+
+
+                    return colors.danger;
+                  }),
+
+                pointBorderWidth: 0
+              }]
+            },
+
+
+            options:
+              baseLineOptions(
+                colors,
+                0,
+                100
+              )
+          }
+        );
+    }
 
 
     /* ========================================================
@@ -1637,129 +2078,137 @@
     destroyChart('mood');
 
 
-    charts.mood =
-      new Chart(
-        $('#chart-mood'),
-        {
-
-          type: 'line',
-
-          data: {
-
-            labels,
-
-            datasets: [
-
-              {
-
-                label:
-                  'Mood (1–5)',
-
-                data:
-                  days.map(
-                    date =>
-                      value(
-                        date,
-                        'mood'
-                      )
-                  ),
-
-                borderColor:
-                  colors.primary,
-
-                tension: 0.35,
-
-                spanGaps: true,
-
-                pointRadius: 3,
-
-                pointBackgroundColor:
-                  colors.primary,
-
-                yAxisID: 'y'
-              },
-
-              {
-
-                label:
-                  'Motivation (1–10)',
-
-                data:
-                  days.map(
-                    date =>
-                      value(
-                        date,
-                        'motivation'
-                      )
-                  ),
-
-                borderColor:
-                  colors.purple,
-
-                tension: 0.35,
-
-                spanGaps: true,
-
-                pointRadius: 3,
-
-                pointBackgroundColor:
-                  colors.purple,
-
-                yAxisID: 'y1'
-              }
-            ]
-          },
+    const moodCanvas =
+      $('#chart-mood');
 
 
-          options: {
+    if (moodCanvas) {
 
-            ...baseLineOptions(
-              colors,
-              0,
-              5,
-              false
-            ),
+      charts.mood =
+        new Chart(
+          moodCanvas,
+          {
 
-            scales: {
+            type: 'line',
 
-              x:
-                axisX(colors),
+            data: {
 
-              y: {
+              labels,
 
-                min: 0,
+              datasets: [
 
-                max: 5,
+                {
 
-                ticks: {
-                  color: colors.text
+                  label:
+                    'Mood (1–5)',
+
+                  data:
+                    days.map(
+                      date =>
+                        value(
+                          date,
+                          'mood'
+                        )
+                    ),
+
+                  borderColor:
+                    colors.primary,
+
+                  tension: 0.35,
+
+                  spanGaps: true,
+
+                  pointRadius: 3,
+
+                  pointBackgroundColor:
+                    colors.primary,
+
+                  yAxisID: 'y'
                 },
 
-                grid: {
-                  color: colors.grid
+
+                {
+
+                  label:
+                    'Motivation (1–10)',
+
+                  data:
+                    days.map(
+                      date =>
+                        value(
+                          date,
+                          'motivation'
+                        )
+                    ),
+
+                  borderColor:
+                    colors.purple,
+
+                  tension: 0.35,
+
+                  spanGaps: true,
+
+                  pointRadius: 3,
+
+                  pointBackgroundColor:
+                    colors.purple,
+
+                  yAxisID: 'y1'
                 }
-              },
+              ]
+            },
 
-              y1: {
 
-                min: 0,
+            options: {
 
-                max: 10,
+              ...baseLineOptions(
+                colors,
+                0,
+                5,
+                false
+              ),
 
-                position: 'right',
+              scales: {
 
-                ticks: {
-                  color: colors.text
+                x:
+                  axisX(colors),
+
+                y: {
+
+                  min: 0,
+
+                  max: 5,
+
+                  ticks: {
+                    color: colors.text
+                  },
+
+                  grid: {
+                    color: colors.grid
+                  }
                 },
 
-                grid: {
-                  display: false
+                y1: {
+
+                  min: 0,
+
+                  max: 10,
+
+                  position: 'right',
+
+                  ticks: {
+                    color: colors.text
+                  },
+
+                  grid: {
+                    display: false
+                  }
                 }
               }
             }
           }
-        }
-      );
+        );
+    }
 
 
     /* ========================================================
@@ -1769,105 +2218,113 @@
     destroyChart('sleepStudy');
 
 
-    charts.sleepStudy =
-      new Chart(
-        $('#chart-sleep-study'),
-        {
-
-          type: 'bar',
-
-          data: {
-
-            labels,
-
-            datasets: [
-
-              {
-
-                label:
-                  'Sleep (h)',
-
-                data:
-                  days.map(
-                    date =>
-                      value(
-                        date,
-                        'sleep'
-                      )
-                  ),
-
-                backgroundColor:
-                  hexToRgba(
-                    colors.primary,
-                    0.75
-                  ),
-
-                borderRadius: 6
-              },
-
-              {
-
-                label:
-                  'Study (h)',
-
-                data:
-                  days.map(
-                    date =>
-                      value(
-                        date,
-                        'study'
-                      )
-                  ),
-
-                backgroundColor:
-                  hexToRgba(
-                    colors.purple,
-                    0.65
-                  ),
-
-                borderRadius: 6
-              }
-            ]
-          },
+    const sleepStudyCanvas =
+      $('#chart-sleep-study');
 
 
-          options: {
+    if (sleepStudyCanvas) {
 
-            responsive: true,
+      charts.sleepStudy =
+        new Chart(
+          sleepStudyCanvas,
+          {
 
-            maintainAspectRatio: false,
+            type: 'bar',
 
-            plugins: {
+            data: {
 
-              legend: {
+              labels,
 
-                labels: {
-                  color: colors.text
-                }
-              }
-            },
+              datasets: [
 
-            scales: {
+                {
 
-              x:
-                axisX(colors),
+                  label:
+                    'Sleep (h)',
 
-              y: {
+                  data:
+                    days.map(
+                      date =>
+                        value(
+                          date,
+                          'sleep'
+                        )
+                    ),
 
-                beginAtZero: true,
+                  backgroundColor:
+                    hexToRgba(
+                      colors.primary,
+                      0.75
+                    ),
 
-                ticks: {
-                  color: colors.text
+                  borderRadius: 6
                 },
 
-                grid: {
-                  color: colors.grid
+
+                {
+
+                  label:
+                    'Study (h)',
+
+                  data:
+                    days.map(
+                      date =>
+                        value(
+                          date,
+                          'study'
+                        )
+                    ),
+
+                  backgroundColor:
+                    hexToRgba(
+                      colors.purple,
+                      0.65
+                    ),
+
+                  borderRadius: 6
+                }
+              ]
+            },
+
+
+            options: {
+
+              responsive: true,
+
+              maintainAspectRatio: false,
+
+              plugins: {
+
+                legend: {
+
+                  labels: {
+                    color: colors.text
+                  }
+                }
+              },
+
+              scales: {
+
+                x:
+                  axisX(colors),
+
+                y: {
+
+                  beginAtZero: true,
+
+                  ticks: {
+                    color: colors.text
+                  },
+
+                  grid: {
+                    color: colors.grid
+                  }
                 }
               }
             }
           }
-        }
-      );
+        );
+    }
 
 
     /* ========================================================
@@ -1877,65 +2334,73 @@
     destroyChart('stress');
 
 
-    charts.stress =
-      new Chart(
-        $('#chart-stress'),
-        {
+    const stressCanvas =
+      $('#chart-stress');
 
-          type: 'line',
 
-          data: {
+    if (stressCanvas) {
 
-            labels,
+      charts.stress =
+        new Chart(
+          stressCanvas,
+          {
 
-            datasets: [{
+            type: 'line',
 
-              label:
-                'Stress (1–10)',
+            data: {
 
-              data:
-                days.map(
-                  date =>
-                    value(
-                      date,
-                      'stress'
-                    )
-                ),
+              labels,
 
-              borderColor:
-                colors.purple,
+              datasets: [{
 
-              backgroundColor:
-                hexToRgba(
+                label:
+                  'Stress (1–10)',
+
+                data:
+                  days.map(
+                    date =>
+                      value(
+                        date,
+                        'stress'
+                      )
+                  ),
+
+                borderColor:
                   colors.purple,
-                  0.12
-                ),
 
-              fill: true,
+                backgroundColor:
+                  hexToRgba(
+                    colors.purple,
+                    0.12
+                  ),
 
-              tension: 0.35,
+                fill: true,
 
-              spanGaps: true,
+                tension: 0.35,
 
-              pointRadius: 3,
+                spanGaps: true,
 
-              pointBackgroundColor:
-                colors.purple
-            }]
-          },
+                pointRadius: 3,
+
+                pointBackgroundColor:
+                  colors.purple
+              }]
+            },
 
 
-          options:
-            baseLineOptions(
-              colors,
-              0,
-              10
-            )
-        }
-      );
+            options:
+              baseLineOptions(
+                colors,
+                0,
+                10
+              )
+          }
+        );
+    }
 
 
     renderPeriodTables(entries);
+
 
     renderBehaviorChanges(
       currentAverage,
@@ -1955,6 +2420,7 @@
 
     const container =
       $('#summary-cards');
+
 
     if (!container) return;
 
@@ -2020,7 +2486,9 @@
 
         if (
           current &&
-          previous
+          previous &&
+          current[metric.key] != null &&
+          previous[metric.key] != null
         ) {
 
           const difference =
@@ -2093,13 +2561,16 @@
           <div class="sum-card">
 
             <div class="sc-label">
-              ${metric.label}
+              ${escapeHtml(metric.label)}
             </div>
 
             <div class="sc-value">
               ${
                 value != null
-                  ? value + metric.unit
+                  ? escapeHtml(
+                      String(value) +
+                      metric.unit
+                    )
                   : '–'
               }
             </div>
@@ -2131,6 +2602,7 @@
           Burnout.averages(
             currentEntries
           );
+
 
         const previous =
           Burnout.averages(
@@ -2223,8 +2695,8 @@
         let html = `
           <tr>
             <th>Metric</th>
-            <th>${currentLabel}</th>
-            <th>${previousLabel}</th>
+            <th>${escapeHtml(currentLabel)}</th>
+            <th>${escapeHtml(previousLabel)}</th>
           </tr>
         `;
 
@@ -2241,14 +2713,9 @@
 
 
             if (
-              typeof currentValue ===
-                'number' &&
-
-              typeof previousValue ===
-                'number' &&
-
+              typeof currentValue === 'number' &&
+              typeof previousValue === 'number' &&
               lowerBetter !== null &&
-
               label !== 'Check-ins'
             ) {
 
@@ -2281,15 +2748,15 @@
               <tr>
 
                 <td>
-                  ${label}
+                  ${escapeHtml(label)}
                 </td>
 
                 <td class="${className}">
-                  ${currentValue}
+                  ${escapeHtml(String(currentValue))}
                 </td>
 
                 <td>
-                  ${previousValue}
+                  ${escapeHtml(String(previousValue))}
                 </td>
 
               </tr>
@@ -2309,6 +2776,7 @@
         0
       );
 
+
     const weeklyPrevious =
       entriesBetween(
         entries,
@@ -2319,6 +2787,7 @@
 
     const weeklyTable =
       $('#weekly-table');
+
 
     if (weeklyTable) {
 
@@ -2339,6 +2808,7 @@
         0
       );
 
+
     const monthlyPrevious =
       entriesBetween(
         entries,
@@ -2349,6 +2819,7 @@
 
     const monthlyTable =
       $('#monthly-table');
+
 
     if (monthlyTable) {
 
@@ -2374,6 +2845,7 @@
 
     const box =
       $('#behavior-changes');
+
 
     if (!box) return;
 
@@ -2520,8 +2992,8 @@
     box.innerHTML =
       items
         .map(item => `
-          <div class="bc-item ${item.cls}">
-            <i class="fa-solid ${item.icon}"></i>
+          <div class="bc-item ${escapeHtml(item.cls)}">
+            <i class="fa-solid ${escapeHtml(item.icon)}"></i>
             ${escapeHtml(item.text)}
           </div>
         `)
@@ -2579,8 +3051,10 @@
     const search =
       $('#history-search');
 
+
     const riskFilter =
       $('#history-filter-risk');
+
 
     const moodFilter =
       $('#history-filter-mood');
@@ -2654,6 +3128,7 @@
     const empty =
       $('#history-empty');
 
+
     if (empty) {
 
       empty.classList.toggle(
@@ -2665,6 +3140,7 @@
 
     const list =
       $('#history-list');
+
 
     if (!list) return;
 
@@ -2691,7 +3167,7 @@
 
           <div
             class="h-entry"
-            data-id="${entry.id}"
+            data-id="${escapeHtml(String(entry.id || entry.date))}"
           >
 
             <div class="h-date">
@@ -2721,37 +3197,37 @@
                   class="h-chip ${riskClass}"
                 >
                   ${escapeHtml(entry.category)}
-                  · ${entry.score}
+                  · ${escapeHtml(String(entry.score))}
                 </span>
 
 
                 <span class="h-chip">
-                  ${MOOD_EMOJI[entry.mood]}
-                  ${MOOD_LABEL[entry.mood]}
+                  ${MOOD_EMOJI[entry.mood] || ''}
+                  ${MOOD_LABEL[entry.mood] || ''}
                 </span>
 
 
                 <span class="h-chip">
                   <i class="fa-solid fa-bolt"></i>
-                  Stress ${entry.stress}/10
+                  Stress ${escapeHtml(String(entry.stress))}/10
                 </span>
 
 
                 <span class="h-chip">
                   <i class="fa-solid fa-bed"></i>
-                  ${entry.sleep}h
+                  ${escapeHtml(String(entry.sleep))}h
                 </span>
 
 
                 <span class="h-chip">
                   <i class="fa-solid fa-book-open"></i>
-                  ${entry.study}h
+                  ${escapeHtml(String(entry.study))}h
                 </span>
 
 
                 <span class="h-chip">
                   <i class="fa-solid fa-fire"></i>
-                  Motiv. ${entry.motivation}/10
+                  Motiv. ${escapeHtml(String(entry.motivation))}/10
                 </span>
 
               </div>
@@ -2790,6 +3266,7 @@
     const search =
       $('#history-search');
 
+
     if (search) {
 
       search.addEventListener(
@@ -2801,6 +3278,7 @@
 
     const riskFilter =
       $('#history-filter-risk');
+
 
     if (riskFilter) {
 
@@ -2814,6 +3292,7 @@
     const moodFilter =
       $('#history-filter-mood');
 
+
     if (moodFilter) {
 
       moodFilter.addEventListener(
@@ -2826,6 +3305,7 @@
     const historyList =
       $('#history-list');
 
+
     if (historyList) {
 
       historyList.addEventListener(
@@ -2837,6 +3317,7 @@
               '.h-del'
             );
 
+
           if (!button) return;
 
 
@@ -2844,6 +3325,9 @@
             button.closest(
               '.h-entry'
             );
+
+
+          if (!entry) return;
 
 
           const id =
@@ -2880,6 +3364,7 @@
     const exportJSON =
       $('#export-json');
 
+
     if (exportJSON) {
 
       exportJSON.addEventListener(
@@ -2891,6 +3376,7 @@
 
     const exportCSV =
       $('#export-csv');
+
 
     if (exportCSV) {
 
@@ -2933,7 +3419,9 @@
     let filename;
 
 
-    /* ---------- JSON ---------- */
+    /* ========================================================
+       JSON
+       ======================================================== */
 
     if (format === 'json') {
 
@@ -2972,7 +3460,9 @@
     }
 
 
-    /* ---------- CSV ---------- */
+    /* ========================================================
+       CSV
+       ======================================================== */
 
     else {
 
@@ -3077,7 +3567,9 @@
     }
 
 
-    /* ---------- Download ---------- */
+    /* ========================================================
+       DOWNLOAD
+       ======================================================== */
 
     const url =
       URL.createObjectURL(blob);
@@ -3087,7 +3579,9 @@
       document.createElement('a');
 
 
-    link.href = url;
+    link.href =
+      url;
+
 
     link.download =
       filename;
@@ -3095,12 +3589,18 @@
 
     document.body.appendChild(link);
 
+
     link.click();
+
 
     link.remove();
 
 
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+
+      URL.revokeObjectURL(url);
+
+    }, 100);
 
 
     toast(
@@ -3151,6 +3651,7 @@
     const progress =
       $('#ach-progress-fill');
 
+
     if (progress) {
 
       progress.style.width =
@@ -3161,6 +3662,7 @@
     const progressText =
       $('#ach-progress-text');
 
+
     if (progressText) {
 
       progressText.textContent =
@@ -3170,6 +3672,7 @@
 
     const grid =
       $('#badges-grid');
+
 
     if (!grid) return;
 
@@ -3183,7 +3686,7 @@
         >
 
           <div class="b-icon">
-            <i class="fa-solid ${badge.icon}"></i>
+            <i class="fa-solid ${escapeHtml(badge.icon)}"></i>
           </div>
 
 
@@ -3235,7 +3738,14 @@
 
     if (charts[key]) {
 
-      charts[key].destroy();
+      try {
+        charts[key].destroy();
+      } catch (error) {
+        console.warn(
+          `WellTrack: Could not destroy chart "${key}".`,
+          error
+        );
+      }
 
       charts[key] = null;
     }
@@ -3361,6 +3871,7 @@
         -fromDaysAgo
       );
 
+
     const to =
       Storage.todayStr(
         -toDaysAgo
@@ -3485,7 +3996,9 @@
     const element =
       $(selector);
 
+
     if (element) {
+
       element.textContent =
         value;
     }
@@ -3519,7 +4032,7 @@
     () => {
 
       /* ======================================================
-         FORCE WELLTRACK BLACK + PURPLE THEME
+         FORCE BLACK + PURPLE THEME
          ====================================================== */
 
       applyWellTrackTheme();
@@ -3527,14 +4040,11 @@
 
       /* ======================================================
          THEME BUTTON
-
-         If the old HTML still contains the button,
-         clicking it does nothing because WellTrack now
-         uses the permanent black + purple theme.
          ====================================================== */
 
       const themeButton =
         $('#theme-toggle');
+
 
       if (themeButton) {
 
@@ -3587,9 +4097,14 @@
           if (!button) return;
 
 
-          switchView(
-            button.dataset.goto
-          );
+          const destination =
+            button.dataset.goto;
+
+
+          if (!destination) return;
+
+
+          switchView(destination);
         }
       );
 
