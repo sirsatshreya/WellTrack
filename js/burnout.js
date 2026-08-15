@@ -1,165 +1,630 @@
 /* ============================================================
-   burnout.js — Burnout risk scoring & recommendation engine
-   ------------------------------------------------------------
-   Score 0–100 (higher = more burnout risk), built from:
-     • Stress (0–30 pts)       stress 1–10
-     • Mood (0–20 pts)         mood 1–5 (low mood = risk)
-     • Motivation (0–20 pts)   motivation 1–10 (low = risk)
-     • Sleep (0–20 pts)        deviation from 7–9 h healthy band
-     • Study load (0–10 pts)   overwork > 8 h/day escalates risk
+   WellTrack — Burnout Risk Scoring & Recommendation Engine
+   ============================================================
+
+   Burnout Score: 0–100
+   Higher score = higher burnout risk
+
+   Factors:
+     • Stress       → 0–30 pts
+     • Mood         → 0–20 pts
+     • Motivation   → 0–20 pts
+     • Sleep        → 0–20 pts
+     • Study Load   → 0–10 pts
+
    Categories:
-     0–39   Healthy
-     40–64  Moderate Risk
-     65–100 High Risk
+     0–39   → Healthy
+     40–64  → Moderate Risk
+     65–100 → High Risk
+
+   Profile information is NOT used here.
+   Profile:
+     Name + Email + Course + Class
+
+   Daily check-in data is used here:
+     Mood + Stress + Sleep + Study + Motivation
    ============================================================ */
+
 
 const Burnout = (() => {
 
-  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+  /* ==========================================================
+     HELPER
+     ========================================================== */
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+
+  /* ==========================================================
+     BURNOUT SCORE
+     ========================================================== */
 
   function computeScore(entry) {
-    const stress = clamp(Number(entry.stress) || 0, 1, 10);
-    const mood = clamp(Number(entry.mood) || 3, 1, 5);
-    const motivation = clamp(Number(entry.motivation) || 5, 1, 10);
-    const sleep = clamp(Number(entry.sleep) || 0, 0, 16);
-    const study = clamp(Number(entry.study) || 0, 0, 18);
 
-    // Stress: 1 -> 0 pts, 10 -> 30 pts
-    const stressPts = ((stress - 1) / 9) * 30;
+    const stress = clamp(
+      Number(entry.stress) || 0,
+      1,
+      10
+    );
 
-    // Mood: 5 -> 0 pts, 1 -> 20 pts
-    const moodPts = ((5 - mood) / 4) * 20;
+    const mood = clamp(
+      Number(entry.mood) || 3,
+      1,
+      5
+    );
 
-    // Motivation: 10 -> 0 pts, 1 -> 20 pts
-    const motivPts = ((10 - motivation) / 9) * 20;
+    const motivation = clamp(
+      Number(entry.motivation) || 5,
+      1,
+      10
+    );
 
-    // Sleep: 7–9 h ideal band -> 0 pts; each hour outside adds ~5 pts (max 20)
-    let sleepDev = 0;
-    if (sleep < 7) sleepDev = 7 - sleep;
-    else if (sleep > 9) sleepDev = sleep - 9;
-    const sleepPts = clamp(sleepDev * 5, 0, 20);
+    const sleep = clamp(
+      Number(entry.sleep) || 0,
+      0,
+      16
+    );
 
-    // Study overload: >8 h adds 2.5 pts/hour (max 10)
-    const studyPts = clamp((study - 8) * 2.5, 0, 10);
+    const study = clamp(
+      Number(entry.study) || 0,
+      0,
+      18
+    );
 
-    const score = Math.round(stressPts + moodPts + motivPts + sleepPts + studyPts);
+
+    /* --------------------------------------------------------
+       1. STRESS
+       1/10  → 0 points
+       10/10 → 30 points
+       -------------------------------------------------------- */
+
+    const stressPoints =
+      ((stress - 1) / 9) * 30;
+
+
+    /* --------------------------------------------------------
+       2. MOOD
+       5/5 → 0 points
+       1/5 → 20 points
+       -------------------------------------------------------- */
+
+    const moodPoints =
+      ((5 - mood) / 4) * 20;
+
+
+    /* --------------------------------------------------------
+       3. MOTIVATION
+       10/10 → 0 points
+       1/10  → 20 points
+       -------------------------------------------------------- */
+
+    const motivationPoints =
+      ((10 - motivation) / 9) * 20;
+
+
+    /* --------------------------------------------------------
+       4. SLEEP
+       Healthy range = 7–9 hours
+
+       Every hour outside the healthy range
+       adds approximately 5 points.
+       Maximum = 20 points.
+       -------------------------------------------------------- */
+
+    let sleepDeviation = 0;
+
+    if (sleep < 7) {
+      sleepDeviation = 7 - sleep;
+    }
+    else if (sleep > 9) {
+      sleepDeviation = sleep - 9;
+    }
+
+    const sleepPoints = clamp(
+      sleepDeviation * 5,
+      0,
+      20
+    );
+
+
+    /* --------------------------------------------------------
+       5. STUDY LOAD
+       0–8 hours → 0 points
+       >8 hours  → increasing risk
+       Maximum = 10 points
+       -------------------------------------------------------- */
+
+    const studyPoints = clamp(
+      (study - 8) * 2.5,
+      0,
+      10
+    );
+
+
+    /* --------------------------------------------------------
+       FINAL SCORE
+       -------------------------------------------------------- */
+
+    const score = Math.round(
+      stressPoints +
+      moodPoints +
+      motivationPoints +
+      sleepPoints +
+      studyPoints
+    );
+
     return clamp(score, 0, 100);
   }
 
+
+  /* ==========================================================
+     CATEGORY
+     ========================================================== */
+
   function categorize(score) {
-    if (score < 40) return 'Healthy';
-    if (score < 65) return 'Moderate Risk';
+
+    if (score < 40) {
+      return 'Healthy';
+    }
+
+    if (score < 65) {
+      return 'Moderate Risk';
+    }
+
     return 'High Risk';
   }
 
+
+  /* ==========================================================
+     CATEGORY CSS CLASS
+     ========================================================== */
+
   function categoryClass(category) {
-    if (category === 'Healthy') return 'healthy';
-    if (category === 'Moderate Risk') return 'moderate';
+
+    if (category === 'Healthy') {
+      return 'healthy';
+    }
+
+    if (category === 'Moderate Risk') {
+      return 'moderate';
+    }
+
     return 'high';
   }
 
-  /* ------------------------------------------------------------
-     Recommendations based on the latest entry + recent trend
-     Returns array of {level: danger|warning|success|info, icon, text}
-     ------------------------------------------------------------ */
-  function recommendations(entry, recentEntries = []) {
-    const recs = [];
+
+  /* ==========================================================
+     PERSONALIZED RECOMMENDATIONS
+     ========================================================== */
+
+  function recommendations(
+    entry,
+    recentEntries = []
+  ) {
+
+    const recommendationsList = [];
+
+
+    /* --------------------------------------------------------
+       No check-in yet
+       -------------------------------------------------------- */
+
     if (!entry) {
-      return [{ level: 'info', icon: 'fa-circle-info', text: 'Start your first check-in to get personalized advice.' }];
+
+      return [
+        {
+          level: 'info',
+          icon: 'fa-circle-info',
+          text:
+            'Complete your first daily check-in to receive personalized well-being recommendations.'
+        }
+      ];
     }
 
-    const score = entry.score;
-    const cat = entry.category;
 
-    // --- Risk level headline ---
-    if (cat === 'High Risk') {
-      recs.push({ level: 'danger', icon: 'fa-triangle-exclamation', text: 'Your burnout risk is HIGH today. Consider taking a proper break, talking to a friend, mentor, or campus counselor, and reducing your workload for a day or two.' });
-    } else if (cat === 'Moderate Risk') {
-      recs.push({ level: 'warning', icon: 'fa-circle-exclamation', text: 'You are showing moderate signs of strain. Small adjustments now — better sleep, short breaks, lighter evenings — can prevent escalation.' });
-    } else {
-      recs.push({ level: 'success', icon: 'fa-circle-check', text: 'You are in a healthy zone. Keep up your current balance of study, rest, and recovery!' });
+    const score = Number(entry.score) || 0;
+    const category = entry.category;
+
+
+    /* ========================================================
+       RISK LEVEL
+       ======================================================== */
+
+    if (category === 'High Risk') {
+
+      recommendationsList.push({
+        level: 'danger',
+        icon: 'fa-triangle-exclamation',
+        text:
+          'Your burnout risk is high today. Consider reducing your workload, taking a proper break, and talking to someone you trust if the pressure continues.'
+      });
+
     }
 
-    // --- Stress ---
-    if (entry.stress >= 8) {
-      recs.push({ level: 'danger', icon: 'fa-bolt', text: 'Stress is very high (' + entry.stress + '/10). Try the 4-7-8 breathing technique, a 15-minute walk, or writing down what is worrying you to make it concrete.' });
-    } else if (entry.stress >= 6) {
-      recs.push({ level: 'warning', icon: 'fa-bolt', text: 'Stress is elevated. Schedule short breaks every 45–60 minutes of study (Pomodoro technique) and avoid multitasking.' });
+    else if (category === 'Moderate Risk') {
+
+      recommendationsList.push({
+        level: 'warning',
+        icon: 'fa-circle-exclamation',
+        text:
+          'You are showing moderate signs of strain. Improving sleep, taking regular breaks, and balancing study with recovery can help prevent your stress from increasing.'
+      });
+
     }
 
-    // --- Sleep ---
-    if (entry.sleep < 6) {
-      recs.push({ level: 'danger', icon: 'fa-bed', text: 'Only ' + entry.sleep + 'h of sleep — this strongly amplifies stress and hurts memory consolidation. Aim for 7–9 hours; try a fixed wind-down time tonight with no screens 30 min before bed.' });
-    } else if (entry.sleep < 7) {
-      recs.push({ level: 'warning', icon: 'fa-bed', text: 'Sleep is slightly below the healthy 7–9 hour range. Going to bed 30–45 minutes earlier can noticeably improve focus tomorrow.' });
-    } else if (entry.sleep > 10) {
-      recs.push({ level: 'warning', icon: 'fa-bed', text: 'Oversleeping (' + entry.sleep + 'h) can be a sign of exhaustion or low mood. Try a consistent wake-up time and morning daylight exposure.' });
+    else {
+
+      recommendationsList.push({
+        level: 'success',
+        icon: 'fa-circle-check',
+        text:
+          'You are currently in a healthy range. Keep maintaining a balanced routine of study, rest, sleep, and recovery.'
+      });
     }
 
-    // --- Study load ---
-    if (entry.study > 10) {
-      recs.push({ level: 'danger', icon: 'fa-book-open', text: entry.study + ' hours of study is unsustainable. Long-term retention drops sharply after ~8 focused hours. Plan spaced revision instead of marathon sessions.' });
-    } else if (entry.study > 8) {
-      recs.push({ level: 'warning', icon: 'fa-book-open', text: 'Heavy study day (' + entry.study + 'h). Make sure tomorrow includes lighter blocks and real rest to recover.' });
-    } else if (entry.study < 1 && entry.motivation <= 4) {
-      recs.push({ level: 'info', icon: 'fa-seedling', text: 'Low study time with low motivation — start with just one tiny 10-minute task. Momentum usually follows action, not the other way round.' });
+
+    /* ========================================================
+       STRESS
+       ======================================================== */
+
+    if (Number(entry.stress) >= 8) {
+
+      recommendationsList.push({
+        level: 'danger',
+        icon: 'fa-bolt',
+        text:
+          `Your stress level is very high (${entry.stress}/10). Take a short break, try slow breathing, go for a 10–15 minute walk, or write down the specific things causing pressure.`
+      });
+
     }
 
-    // --- Motivation ---
-    if (entry.motivation <= 3) {
-      recs.push({ level: 'warning', icon: 'fa-fire', text: 'Motivation is very low. Reconnect with your "why", break work into micro-goals, and reward yourself after each one. A day off can also legitimately recharge you.' });
+    else if (Number(entry.stress) >= 6) {
+
+      recommendationsList.push({
+        level: 'warning',
+        icon: 'fa-bolt',
+        text:
+          'Your stress is elevated. Try taking short breaks every 45–60 minutes and avoid multitasking while studying.'
+      });
     }
 
-    // --- Mood ---
-    if (entry.mood <= 2) {
-      recs.push({ level: 'warning', icon: 'fa-face-frown', text: 'Your mood is low today. Physical activity, sunlight, and talking to someone you trust are proven fast mood-lifters. Be kind to yourself.' });
+
+    /* ========================================================
+       SLEEP
+       ======================================================== */
+
+    if (Number(entry.sleep) < 6) {
+
+      recommendationsList.push({
+        level: 'danger',
+        icon: 'fa-bed',
+        text:
+          `You slept only ${entry.sleep} hours. Consistently getting too little sleep can negatively affect concentration, recovery, and stress levels. Aim for 7–9 hours.`
+      });
+
     }
 
-    // --- Trend-based insights (needs >= 3 recent entries) ---
+    else if (Number(entry.sleep) < 7) {
+
+      recommendationsList.push({
+        level: 'warning',
+        icon: 'fa-bed',
+        text:
+          'Your sleep is slightly below the recommended 7–9 hour range. Try going to bed a little earlier tonight.'
+      });
+
+    }
+
+    else if (Number(entry.sleep) > 10) {
+
+      recommendationsList.push({
+        level: 'warning',
+        icon: 'fa-bed',
+        text:
+          `You slept ${entry.sleep} hours. If unusually long sleep happens repeatedly, pay attention to your overall energy and routine.`
+      });
+    }
+
+
+    /* ========================================================
+       STUDY LOAD
+       ======================================================== */
+
+    if (Number(entry.study) > 10) {
+
+      recommendationsList.push({
+        level: 'danger',
+        icon: 'fa-book-open',
+        text:
+          `${entry.study} hours is a very heavy study day. Use shorter focused sessions, spaced revision, and adequate recovery instead of repeatedly studying for long stretches.`
+      });
+
+    }
+
+    else if (Number(entry.study) > 8) {
+
+      recommendationsList.push({
+        level: 'warning',
+        icon: 'fa-book-open',
+        text:
+          `You studied for ${entry.study} hours today. Make sure you include proper breaks and recovery instead of maintaining this workload every day.`
+      });
+
+    }
+
+    else if (
+      Number(entry.study) < 1 &&
+      Number(entry.motivation) <= 4
+    ) {
+
+      recommendationsList.push({
+        level: 'info',
+        icon: 'fa-seedling',
+        text:
+          'You had very little study time and low motivation today. Start with one small 10-minute task rather than trying to complete everything at once.'
+      });
+    }
+
+
+    /* ========================================================
+       MOTIVATION
+       ======================================================== */
+
+    if (Number(entry.motivation) <= 3) {
+
+      recommendationsList.push({
+        level: 'warning',
+        icon: 'fa-fire',
+        text:
+          'Your motivation is very low today. Break your work into small tasks and focus on completing one task at a time.'
+      });
+    }
+
+
+    /* ========================================================
+       MOOD
+       ======================================================== */
+
+    if (Number(entry.mood) <= 2) {
+
+      recommendationsList.push({
+        level: 'warning',
+        icon: 'fa-face-frown',
+        text:
+          'Your mood is low today. Consider taking some time away from study, getting some movement or daylight, and talking to someone you trust.'
+      });
+    }
+
+
+    /* ========================================================
+       TREND ANALYSIS
+       ======================================================== */
+
     if (recentEntries.length >= 3) {
-      const last3 = recentEntries.slice(0, 3);
-      const avgRecentScore = last3.reduce((s, e) => s + e.score, 0) / 3;
-      const older = recentEntries.slice(3, 6);
-      if (older.length >= 2) {
-        const avgOlder = older.reduce((s, e) => s + e.score, 0) / older.length;
-        if (avgRecentScore - avgOlder >= 10) {
-          recs.push({ level: 'danger', icon: 'fa-arrow-trend-up', text: 'Your burnout risk has been rising over recent days. Treat this as an early warning: plan one genuinely restful day this week.' });
-        } else if (avgOlder - avgRecentScore >= 10) {
-          recs.push({ level: 'success', icon: 'fa-arrow-trend-down', text: 'Great progress — your burnout risk has been dropping over recent days. Whatever you changed, keep doing it!' });
+
+      const lastThree =
+        recentEntries.slice(0, 3);
+
+
+      /* ------------------------------------------------------
+         Recent average
+         ------------------------------------------------------ */
+
+      const recentScores =
+        lastThree.map(
+          entry => Number(entry.score) || 0
+        );
+
+      const recentAverage =
+        recentScores.reduce(
+          (total, value) => total + value,
+          0
+        ) / recentScores.length;
+
+
+      /* ------------------------------------------------------
+         Older average
+         ------------------------------------------------------ */
+
+      const olderEntries =
+        recentEntries.slice(3, 6);
+
+
+      if (olderEntries.length >= 2) {
+
+        const olderScores =
+          olderEntries.map(
+            entry => Number(entry.score) || 0
+          );
+
+        const olderAverage =
+          olderScores.reduce(
+            (total, value) => total + value,
+            0
+          ) / olderScores.length;
+
+
+        /* Risk increasing */
+
+        if (
+          recentAverage - olderAverage >= 10
+        ) {
+
+          recommendationsList.push({
+            level: 'danger',
+            icon: 'fa-arrow-trend-up',
+            text:
+              'Your burnout risk has been increasing recently. Treat this as an early warning and schedule some genuine recovery time.'
+          });
+        }
+
+
+        /* Risk decreasing */
+
+        else if (
+          olderAverage - recentAverage >= 10
+        ) {
+
+          recommendationsList.push({
+            level: 'success',
+            icon: 'fa-arrow-trend-down',
+            text:
+              'Your burnout risk has been improving recently. Continue the habits that appear to be helping you.'
+          });
         }
       }
-      const lowSleepDays = last3.filter(e => e.sleep < 6.5).length;
+
+
+      /* ------------------------------------------------------
+         Repeated low sleep
+         ------------------------------------------------------ */
+
+      const lowSleepDays =
+        lastThree.filter(
+          entry => Number(entry.sleep) < 6.5
+        ).length;
+
+
       if (lowSleepDays >= 3) {
-        recs.push({ level: 'danger', icon: 'fa-moon', text: 'Three or more consecutive short-sleep days detected. Sleep debt compounds — prioritize a full night of rest tonight.' });
+
+        recommendationsList.push({
+          level: 'danger',
+          icon: 'fa-moon',
+          text:
+            'You have recorded short sleep on several recent days. Prioritize a full night of rest and avoid repeatedly sacrificing sleep for study.'
+        });
       }
-      const highStressDays = last3.filter(e => e.stress >= 7).length;
+
+
+      /* ------------------------------------------------------
+         Repeated high stress
+         ------------------------------------------------------ */
+
+      const highStressDays =
+        lastThree.filter(
+          entry => Number(entry.stress) >= 7
+        ).length;
+
+
       if (highStressDays >= 3) {
-        recs.push({ level: 'warning', icon: 'fa-heart-pulse', text: 'Sustained high stress for several days. Consider blocking a stress-free evening and reviewing whether any deadline can be renegotiated.' });
+
+        recommendationsList.push({
+          level: 'warning',
+          icon: 'fa-heart-pulse',
+          text:
+            'Your stress has remained high for several days. Consider reducing unnecessary workload and creating at least one genuinely stress-free period in your day.'
+        });
       }
     }
 
-    return recs.slice(0, 6);
+
+    /* ========================================================
+       RETURN MAXIMUM 6 RECOMMENDATIONS
+       ======================================================== */
+
+    return recommendationsList.slice(0, 6);
   }
 
-  /* Average helper for summaries */
+
+  /* ==========================================================
+     AVERAGES
+     Used by Analytics
+     ========================================================== */
+
   function averages(entries) {
-    if (!entries.length) return null;
-    const sum = { score: 0, mood: 0, stress: 0, sleep: 0, study: 0, motivation: 0 };
-    entries.forEach(e => {
-      sum.score += e.score; sum.mood += e.mood; sum.stress += e.stress;
-      sum.sleep += e.sleep; sum.study += e.study; sum.motivation += e.motivation;
+
+    if (
+      !Array.isArray(entries) ||
+      entries.length === 0
+    ) {
+      return null;
+    }
+
+
+    const totals = {
+
+      score: 0,
+      mood: 0,
+      stress: 0,
+      sleep: 0,
+      study: 0,
+      motivation: 0
+
+    };
+
+
+    entries.forEach(entry => {
+
+      totals.score +=
+        Number(entry.score) || 0;
+
+      totals.mood +=
+        Number(entry.mood) || 0;
+
+      totals.stress +=
+        Number(entry.stress) || 0;
+
+      totals.sleep +=
+        Number(entry.sleep) || 0;
+
+      totals.study +=
+        Number(entry.study) || 0;
+
+      totals.motivation +=
+        Number(entry.motivation) || 0;
+
     });
-    const n = entries.length;
+
+
+    const count = entries.length;
+
+
     return {
-      n,
-      score: +(sum.score / n).toFixed(1),
-      mood: +(sum.mood / n).toFixed(1),
-      stress: +(sum.stress / n).toFixed(1),
-      sleep: +(sum.sleep / n).toFixed(1),
-      study: +(sum.study / n).toFixed(1),
-      motivation: +(sum.motivation / n).toFixed(1)
+
+      n: count,
+
+      score: +(
+        totals.score / count
+      ).toFixed(1),
+
+      mood: +(
+        totals.mood / count
+      ).toFixed(1),
+
+      stress: +(
+        totals.stress / count
+      ).toFixed(1),
+
+      sleep: +(
+        totals.sleep / count
+      ).toFixed(1),
+
+      study: +(
+        totals.study / count
+      ).toFixed(1),
+
+      motivation: +(
+        totals.motivation / count
+      ).toFixed(1)
+
     };
   }
 
-  return { computeScore, categorize, categoryClass, recommendations, averages };
+
+  /* ==========================================================
+     PUBLIC API
+     ========================================================== */
+
+  return {
+
+    computeScore,
+    categorize,
+    categoryClass,
+    recommendations,
+    averages
+
+  };
+
 })();
