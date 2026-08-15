@@ -13,28 +13,70 @@
 <body>
 
 <!-- ============ ONBOARDING / PROFILE SETUP MODAL ============ -->
-<div id="onboarding-overlay" class="modal-overlay hidden" aria-hidden="true">
-  <section class="modal-card" role="dialog" aria-labelledby="onboarding-title">
-    <div class="modal-icon"><i class="fa-solid fa-brain"></i></div>
-    <h2 id="onboarding-title">Welcome to MindTrack</h2>
-    <p class="modal-sub">Your personal burnout detection &amp; well-being companion. Let's set up your profile.</p>
-    <form id="onboarding-form" autocomplete="off">
-      <label for="ob-name">Your Name</label>
-      <input type="text" id="ob-name" placeholder="e.g. Priya Sharma" required maxlength="60">
-      <label for="ob-course">Course / Program</label>
-      <input type="text" id="ob-course" placeholder="e.g. B.Tech Computer Science" required maxlength="80">
-      <label for="ob-year">Academic Year</label>
-      <select id="ob-year" required>
-        <option value="" disabled selected>Select year</option>
-        <option>1st Year</option><option>2nd Year</option><option>3rd Year</option>
-        <option>4th Year</option><option>5th Year</option><option>Postgraduate</option><option>Other</option>
-      </select>
-      <label for="ob-goal">Daily study goal (hours)</label>
-      <input type="number" id="ob-goal" min="0" max="16" step="0.5" value="4">
-      <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-rocket"></i> Start Tracking</button>
+<!-- ==================== LOGIN SECTION ==================== -->
+<section id="login-section" class="login-section">
+
+  <div class="login-card">
+
+    <div class="login-icon">
+      <i class="fa-solid fa-heart-pulse"></i>
+    </div>
+
+    <h1>Welcome to WellTrack</h1>
+    <p class="login-subtitle">
+      Track your well-being. Understand yourself. Stay balanced.
+    </p>
+
+    <form id="login-form">
+
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input
+          type="email"
+          id="login-email"
+          name="email"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input
+          type="password"
+          id="login-password"
+          name="password"
+          required
+        >
+      </div>
+
+      <div class="login-options">
+        <label class="remember-me">
+          <input type="checkbox" id="remember-me">
+          <span>Remember me</span>
+        </label>
+
+        <button type="button" id="forgot-password">
+          Forgot password?
+        </button>
+      </div>
+
+      <button type="submit" class="btn btn-primary login-btn">
+        <i class="fa-solid fa-right-to-bracket"></i>
+        Login
+      </button>
+
     </form>
-  </section>
-</div>
+
+    <p class="signup-text">
+      New to WellTrack?
+      <button type="button" id="create-account">
+        Create account
+      </button>
+    </p>
+
+  </div>
+
+</section>
 
 <!-- ============ APP SHELL ============ -->
 <div id="app-shell" class="app-shell">
