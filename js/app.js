@@ -1,12 +1,25 @@
 /* ============================================================
-   app.js — WellTrack UI controller
+   WellTrack — app.js
+   Black + Purple Luxury UI Controller
    ============================================================ */
 
 (() => {
   'use strict';
 
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+  /* ==========================================================
+     DOM HELPERS
+     ========================================================== */
+
+  const $ = (selector) =>
+    document.querySelector(selector);
+
+  const $$ = (selector) =>
+    Array.from(document.querySelectorAll(selector));
+
+
+  /* ==========================================================
+     CONSTANTS
+     ========================================================== */
 
   const MOOD_EMOJI = {
     1: '😞',
@@ -24,24 +37,37 @@
     5: 'Great'
   };
 
+
+  /* ==========================================================
+     APP STATE
+     ========================================================== */
+
   let charts = {};
+
   let analyticsRange = 7;
 
 
-  /* ============================================================
-     THEME
-  ============================================================ */
+  /* ==========================================================
+     WELLTRACK BLACK + PURPLE THEME
+     ========================================================== */
 
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
+  function applyWellTrackTheme() {
+
+    document.documentElement.setAttribute(
+      'data-theme',
+      'dark'
+    );
+
+    /*
+     * Keep compatibility with the existing theme toggle
+     * if it still exists in the HTML.
+     */
 
     const themeIcon = $('#theme-toggle i');
 
     if (themeIcon) {
       themeIcon.className =
-        theme === 'dark'
-          ? 'fa-solid fa-sun'
-          : 'fa-solid fa-moon';
+        'fa-solid fa-moon';
     }
 
     renderDashboard();
@@ -49,79 +75,122 @@
   }
 
 
+  /* ==========================================================
+     CHART COLORS
+     ========================================================== */
+
   function chartColors() {
-    const dark =
-      document.documentElement.getAttribute('data-theme') === 'dark';
 
     return {
-      text: dark ? '#98a1b8' : '#64708a',
-      grid: dark
-        ? 'rgba(255,255,255,0.07)'
-        : 'rgba(28,35,51,0.07)',
-      primary: dark ? '#7b88ff' : '#5b6cff',
-      purple: '#9b6cff',
-      success: dark ? '#34c98c' : '#1fa971',
-      warning: dark ? '#f0ac3c' : '#e8960c',
-      danger: dark ? '#f0697a' : '#e04f5f',
-      surface2: dark ? '#262a3a' : '#eef1f8'
+
+      /* Main purple */
+      primary: '#9b5cff',
+
+      /* Bright luxury purple */
+      purple: '#c084fc',
+
+      /* Deep purple */
+      purpleDark: '#6d28d9',
+
+      /* Soft lavender */
+      lavender: '#d8b4fe',
+
+      /* Success */
+      success: '#a78bfa',
+
+      /* Warning */
+      warning: '#c084fc',
+
+      /* High risk */
+      danger: '#f472b6',
+
+      /* Text */
+      text: '#aaa3b8',
+
+      textBright: '#f5f3f7',
+
+      /* Grid */
+      grid: 'rgba(168, 85, 247, 0.10)',
+
+      /* Card surface */
+      surface: '#111116',
+
+      surface2: '#1a1720',
+
+      surface3: '#241d2d',
+
+      border: 'rgba(168, 85, 247, 0.20)'
     };
   }
 
 
-  /* ============================================================
+  /* ==========================================================
      TOASTS
-  ============================================================ */
+     ========================================================== */
 
   function toast(
-    msg,
+    message,
     type = 'info',
     icon = 'fa-circle-info'
   ) {
-    const container = $('#toast-container');
+
+    const container =
+      $('#toast-container');
 
     if (!container) return;
 
-    const el = document.createElement('div');
+    const element =
+      document.createElement('div');
 
-    el.className = `toast ${type}`;
+    element.className =
+      `toast ${type}`;
 
-    el.innerHTML = `
+    element.innerHTML = `
       <i class="fa-solid ${icon}"></i>
       <span></span>
     `;
 
-    el.querySelector('span').textContent = msg;
+    element.querySelector('span')
+      .textContent = message;
 
-    container.appendChild(el);
+    container.appendChild(element);
 
     setTimeout(() => {
-      el.classList.add('out');
+
+      element.classList.add('out');
 
       setTimeout(() => {
-        el.remove();
+        element.remove();
       }, 450);
+
     }, 3800);
   }
 
 
-  /* ============================================================
+  /* ==========================================================
      NAVIGATION
-  ============================================================ */
+     ========================================================== */
 
   function switchView(name) {
-    $$('.tab').forEach((tab) => {
+
+    $$('.tab').forEach(tab => {
+
       tab.classList.toggle(
         'active',
         tab.dataset.view === name
       );
+
     });
 
-    $$('.view').forEach((view) => {
+    $$('.view').forEach(view => {
+
       view.classList.toggle(
         'active',
         view.id === `view-${name}`
       );
+
     });
+
 
     if (name === 'dashboard') {
       renderDashboard();
@@ -143,6 +212,7 @@
       prepareCheckinForm();
     }
 
+
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
@@ -150,208 +220,79 @@
   }
 
 
-  /* ============================================================
-     PROFILE
-  ============================================================ */
+  /* ==========================================================
+     PROFILE / ONBOARDING
+     ========================================================== */
 
-  function getOrCreateProfile() {
-    let profile = Storage.getProfile();
+  function checkProfile() {
 
-    /*
-      Migration support:
-      If an older WellTrack/MindTrack profile exists,
-      preserve the useful information and remove dependence
-      on the old course/studyGoal fields.
-    */
+    const profile =
+      Storage.getProfile();
 
-    if (profile) {
-      const migratedProfile = {
-        name: profile.name || '',
-        email: profile.email || '',
-        year: profile.year || '2nd Year',
-        createdAt: profile.createdAt || Date.now()
-      };
+    const overlay =
+      $('#onboarding-overlay');
 
-      /*
-        Save the migrated structure only if necessary.
-      */
-      if (
-        profile.course !== undefined ||
-        profile.studyGoal !== undefined ||
-        profile.email === undefined
-      ) {
-        Storage.saveProfile(migratedProfile);
-        profile = migratedProfile;
-      }
-
+    if (!overlay) {
       return profile;
     }
 
-    /*
-      No profile exists yet.
-
-      We create an empty local profile so the app can still
-      function without an onboarding screen.
-    */
-
-    profile = {
-      name: '',
-      email: '',
-      year: '2nd Year',
-      createdAt: Date.now()
-    };
-
-    Storage.saveProfile(profile);
+    if (!profile) {
+      overlay.classList.remove('hidden');
+    } else {
+      overlay.classList.add('hidden');
+    }
 
     return profile;
   }
 
 
-  function openProfile() {
-    const profile = getOrCreateProfile();
-
-    const nameInput = $('#pf-name');
-    const emailInput = $('#pf-email');
-    const yearInput = $('#pf-year');
-
-    if (nameInput) {
-      nameInput.value = profile.name || '';
-    }
-
-    if (emailInput) {
-      emailInput.value = profile.email || '';
-    }
-
-    if (yearInput) {
-      yearInput.value = profile.year || '2nd Year';
-    }
-
-    const overlay = $('#profile-overlay');
-
-    if (overlay) {
-      overlay.classList.remove('hidden');
-      overlay.setAttribute('aria-hidden', 'false');
-
-      setTimeout(() => {
-        if (nameInput) {
-          nameInput.focus();
-        }
-      }, 100);
-    }
-  }
-
-
-  function closeProfile() {
-    const overlay = $('#profile-overlay');
-
-    if (!overlay) return;
-
-    overlay.classList.add('hidden');
-    overlay.setAttribute('aria-hidden', 'true');
-  }
-
-
   function bindProfile() {
-    const profileButton = $('#profile-btn');
-    const profileClose = $('#profile-close');
-    const profileOverlay = $('#profile-overlay');
-    const profileForm = $('#profile-form');
-    const logoutButton = $('#logout-btn');
 
-    /*
-      Open profile
-    */
+    const onboardingForm =
+      $('#onboarding-form');
 
-    if (profileButton) {
-      profileButton.addEventListener(
-        'click',
-        openProfile
-      );
-    }
+    if (onboardingForm) {
 
-
-    /*
-      Close profile
-    */
-
-    if (profileClose) {
-      profileClose.addEventListener(
-        'click',
-        closeProfile
-      );
-    }
-
-
-    /*
-      Close when clicking outside modal
-    */
-
-    if (profileOverlay) {
-      profileOverlay.addEventListener('click', (event) => {
-        if (event.target === profileOverlay) {
-          closeProfile();
-        }
-      });
-    }
-
-
-    /*
-      Save profile
-    */
-
-    if (profileForm) {
-      profileForm.addEventListener(
+      onboardingForm.addEventListener(
         'submit',
-        (event) => {
+        event => {
+
           event.preventDefault();
 
-          const name =
-            $('#pf-name')?.value.trim() || '';
-
-          const email =
-            $('#pf-email')?.value.trim() || '';
-
-          const year =
-            $('#pf-year')?.value || '2nd Year';
-
-          if (!name) {
-            toast(
-              'Please enter your full name.',
-              'warning',
-              'fa-user'
-            );
-            return;
-          }
-
-          if (!email) {
-            toast(
-              'Please enter your email.',
-              'warning',
-              'fa-envelope'
-            );
-            return;
-          }
-
-          const oldProfile =
-            Storage.getProfile() || {};
-
           const profile = {
-            name,
-            email,
-            year,
+
+            name:
+              $('#ob-name').value.trim(),
+
+            course:
+              $('#ob-course').value.trim(),
+
+            year:
+              $('#ob-year').value,
+
+            studyGoal:
+              parseFloat(
+                $('#ob-goal').value
+              ) || 4,
+
             createdAt:
-              oldProfile.createdAt || Date.now()
+              Date.now()
           };
+
 
           Storage.saveProfile(profile);
 
-          closeProfile();
+
+          $('#onboarding-overlay')
+            .classList.add('hidden');
+
 
           toast(
-            'Profile updated successfully.',
+            `Welcome to WellTrack, ${profile.name}!`,
             'success',
             'fa-circle-check'
           );
+
 
           renderAll();
         }
@@ -359,59 +300,176 @@
     }
 
 
-    /*
-      Logout
+    /* ---------- Profile button ---------- */
 
-      Since WellTrack is currently a client-side LocalStorage
-      application and has no real authentication backend,
-      logout cannot be a real account logout.
+    const profileButton =
+      $('#profile-btn');
 
-      This action removes the local profile only while
-      preserving check-in history.
-    */
+    if (profileButton) {
 
-    if (logoutButton) {
-      logoutButton.addEventListener(
+      profileButton.addEventListener(
         'click',
         () => {
-          const confirmed = confirm(
-            'Log out of WellTrack? Your check-in history will remain saved on this device.'
+
+          const profile =
+            Storage.getProfile();
+
+          if (!profile) return;
+
+          $('#pf-name').value =
+            profile.name || '';
+
+          $('#pf-course').value =
+            profile.course || '';
+
+          $('#pf-year').value =
+            profile.year || '';
+
+          $('#pf-goal').value =
+            profile.studyGoal || 4;
+
+
+          $('#profile-overlay')
+            .classList.remove('hidden');
+        }
+      );
+    }
+
+
+    /* ---------- Close profile ---------- */
+
+    const profileClose =
+      $('#profile-close');
+
+    if (profileClose) {
+
+      profileClose.addEventListener(
+        'click',
+        () => {
+
+          $('#profile-overlay')
+            .classList.add('hidden');
+        }
+      );
+    }
+
+
+    const profileOverlay =
+      $('#profile-overlay');
+
+    if (profileOverlay) {
+
+      profileOverlay.addEventListener(
+        'click',
+        event => {
+
+          if (
+            event.target ===
+            profileOverlay
+          ) {
+
+            profileOverlay
+              .classList.add('hidden');
+          }
+        }
+      );
+    }
+
+
+    /* ---------- Update profile ---------- */
+
+    const profileForm =
+      $('#profile-form');
+
+    if (profileForm) {
+
+      profileForm.addEventListener(
+        'submit',
+        event => {
+
+          event.preventDefault();
+
+          const profile =
+            Storage.getProfile() || {};
+
+
+          profile.name =
+            $('#pf-name')
+              .value
+              .trim();
+
+          profile.course =
+            $('#pf-course')
+              .value
+              .trim();
+
+          profile.year =
+            $('#pf-year').value;
+
+          profile.studyGoal =
+            parseFloat(
+              $('#pf-goal').value
+            ) || 4;
+
+
+          Storage.saveProfile(profile);
+
+
+          $('#profile-overlay')
+            .classList.add('hidden');
+
+
+          toast(
+            'Profile updated successfully.',
+            'success',
+            'fa-circle-check'
           );
+
+
+          renderDashboard();
+        }
+      );
+    }
+
+
+    /* ---------- Reset data ---------- */
+
+    const resetButton =
+      $('#reset-data-btn');
+
+    if (resetButton) {
+
+      resetButton.addEventListener(
+        'click',
+        () => {
+
+          const confirmed =
+            confirm(
+              'This will permanently delete all WellTrack data. Continue?'
+            );
 
           if (!confirmed) return;
 
-          Storage.saveProfile({
-            name: '',
-            email: '',
-            year: '2nd Year',
-            createdAt: Date.now()
-          });
+          Storage.resetAll();
 
-          closeProfile();
-
-          toast(
-            'You have been logged out.',
-            'success',
-            'fa-right-from-bracket'
-          );
-
-          setTimeout(() => {
-            location.reload();
-          }, 700);
+          location.reload();
         }
       );
     }
   }
 
 
-  /* ============================================================
+  /* ==========================================================
      CHECK-IN
-  ============================================================ */
+     ========================================================== */
 
   function prepareCheckinForm() {
-    const dateLabel = $('#checkin-date-label');
+
+    const dateLabel =
+      $('#checkin-date-label');
 
     if (dateLabel) {
+
       dateLabel.textContent =
         new Date().toLocaleDateString(
           undefined,
@@ -424,48 +482,72 @@
         );
     }
 
-    const today = Storage.todayStr();
-    const existing = Storage.getEntryByDate(today);
 
-    const banner = $('#already-checked-banner');
+    const today =
+      Storage.todayStr();
+
+    const existing =
+      Storage.getEntryByDate(today);
+
+
+    const banner =
+      $('#already-checked-banner');
 
     if (banner) {
+
       banner.classList.toggle(
         'hidden',
         !existing
       );
     }
 
-    if (!existing) {
-      return;
-    }
 
-    const radio = document.querySelector(
-      `input[name="mood"][value="${existing.mood}"]`
-    );
+    if (!existing) return;
 
-    if (radio) {
-      radio.checked = true;
+
+    /* ---------- Mood ---------- */
+
+    const moodRadio =
+      document.querySelector(
+        `input[name="mood"][value="${existing.mood}"]`
+      );
+
+    if (moodRadio) {
+
+      moodRadio.checked = true;
+
       highlightMood();
     }
 
-    const stress = $('#in-stress');
-    const stressOutput = $('#out-stress');
+
+    /* ---------- Sliders ---------- */
+
+    const stress =
+      $('#in-stress');
+
+    const stressOutput =
+      $('#out-stress');
 
     if (stress) {
-      stress.value = existing.stress;
+      stress.value =
+        existing.stress;
     }
 
     if (stressOutput) {
-      stressOutput.value = existing.stress;
+      stressOutput.value =
+        existing.stress;
     }
 
 
-    const motivation = $('#in-motivation');
-    const motivationOutput = $('#out-motivation');
+    const motivation =
+      $('#in-motivation');
+
+    const motivationOutput =
+      $('#out-motivation');
 
     if (motivation) {
-      motivation.value = existing.motivation;
+      motivation.value =
+        existing.motivation;
     }
 
     if (motivationOutput) {
@@ -474,45 +556,63 @@
     }
 
 
-    const sleep = $('#in-sleep');
+    /* ---------- Sleep ---------- */
+
+    const sleep =
+      $('#in-sleep');
 
     if (sleep) {
-      sleep.value = existing.sleep;
+      sleep.value =
+        existing.sleep;
     }
 
 
-    const study = $('#in-study');
+    /* ---------- Study ---------- */
+
+    const study =
+      $('#in-study');
 
     if (study) {
-      study.value = existing.study;
+      study.value =
+        existing.study;
     }
 
 
-    const notes = $('#in-notes');
+    /* ---------- Notes ---------- */
+
+    const notes =
+      $('#in-notes');
 
     if (notes) {
-      notes.value = existing.notes || '';
+      notes.value =
+        existing.notes || '';
     }
   }
 
 
   function highlightMood() {
-    $$('.mood-opt').forEach((option) => {
+
+    $$('.mood-opt').forEach(option => {
+
       const input =
         option.querySelector('input');
 
       option.classList.toggle(
         'selected',
-        input ? input.checked : false
+        input && input.checked
       );
+
     });
   }
 
 
   function bindCheckin() {
-    const moodRow = $('#mood-row');
+
+    const moodRow =
+      $('#mood-row');
 
     if (moodRow) {
+
       moodRow.addEventListener(
         'change',
         highlightMood
@@ -520,18 +620,20 @@
     }
 
 
-    const stress = $('#in-stress');
+    const stress =
+      $('#in-stress');
 
-    if (stress) {
+    const stressOutput =
+      $('#out-stress');
+
+    if (stress && stressOutput) {
+
       stress.addEventListener(
         'input',
-        (event) => {
-          const output = $('#out-stress');
+        event => {
 
-          if (output) {
-            output.value =
-              event.target.value;
-          }
+          stressOutput.value =
+            event.target.value;
         }
       );
     }
@@ -540,118 +642,151 @@
     const motivation =
       $('#in-motivation');
 
-    if (motivation) {
+    const motivationOutput =
+      $('#out-motivation');
+
+    if (
+      motivation &&
+      motivationOutput
+    ) {
+
       motivation.addEventListener(
         'input',
-        (event) => {
-          const output =
-            $('#out-motivation');
+        event => {
 
-          if (output) {
-            output.value =
-              event.target.value;
-          }
+          motivationOutput.value =
+            event.target.value;
         }
       );
     }
 
 
-    const form = $('#checkin-form');
+    const form =
+      $('#checkin-form');
 
     if (!form) return;
 
+
     form.addEventListener(
       'submit',
-      (event) => {
+      event => {
+
         event.preventDefault();
+
 
         const moodInput =
           document.querySelector(
             'input[name="mood"]:checked'
           );
 
+
         if (!moodInput) {
+
           toast(
             'Please select your mood.',
             'warning',
             'fa-face-meh'
           );
+
           return;
         }
 
 
         const entry = {
-          date: Storage.todayStr(),
 
-          mood: parseInt(
-            moodInput.value,
-            10
-          ),
+          date:
+            Storage.todayStr(),
 
-          stress: parseInt(
-            $('#in-stress').value,
-            10
-          ),
+          mood:
+            parseInt(
+              moodInput.value,
+              10
+            ),
 
-          motivation: parseInt(
-            $('#in-motivation').value,
-            10
-          ),
+          stress:
+            parseInt(
+              $('#in-stress').value,
+              10
+            ),
 
-          sleep: parseFloat(
-            $('#in-sleep').value
-          ),
+          motivation:
+            parseInt(
+              $('#in-motivation').value,
+              10
+            ),
 
-          study: parseFloat(
-            $('#in-study').value
-          ),
+          sleep:
+            parseFloat(
+              $('#in-sleep').value
+            ),
+
+          study:
+            parseFloat(
+              $('#in-study').value
+            ),
 
           notes:
-            $('#in-notes').value.trim()
+            $('#in-notes')
+              .value
+              .trim()
         };
 
+
+        /* ---------- Burnout ---------- */
 
         entry.score =
           Burnout.computeScore(entry);
 
         entry.category =
-          Burnout.categorize(entry.score);
+          Burnout.categorize(
+            entry.score
+          );
+
+
+        /* ---------- Save ---------- */
 
         Storage.upsertEntry(entry);
 
 
-        /*
-          Achievement check
-        */
+        /* ---------- Achievements ---------- */
 
-        const {
-          newlyEarned
-        } = Achievements.evaluate(
-          Storage.getEntries()
-        );
-
-        newlyEarned.forEach((badge) => {
-          toast(
-            `Badge unlocked: ${badge.name}!`,
-            'success',
-            badge.icon
+        const result =
+          Achievements.evaluate(
+            Storage.getEntries()
           );
-        });
 
+
+        result.newlyEarned
+          .forEach(badge => {
+
+            toast(
+              `Badge unlocked: ${badge.name}!`,
+              'success',
+              badge.icon
+            );
+
+          });
+
+
+        /* ---------- Result ---------- */
 
         showCheckinResult(entry);
 
 
         toast(
-          'Check-in saved!',
+          'Check-in saved successfully.',
           'success',
           'fa-circle-check'
         );
 
 
-        if (entry.category === 'High Risk') {
+        if (
+          entry.category ===
+          'High Risk'
+        ) {
+
           toast(
-            'High burnout risk detected — see your recommendations.',
+            'High burnout risk detected — review your recommendations.',
             'danger',
             'fa-triangle-exclamation'
           );
@@ -662,7 +797,9 @@
           $('#already-checked-banner');
 
         if (banner) {
-          banner.classList.remove('hidden');
+          banner.classList.remove(
+            'hidden'
+          );
         }
 
 
@@ -672,21 +809,31 @@
   }
 
 
+  /* ==========================================================
+     CHECK-IN RESULT
+     ========================================================== */
+
   function showCheckinResult(entry) {
-    const box = $('#checkin-result');
+
+    const box =
+      $('#checkin-result');
 
     if (!box) return;
 
-    const cls =
+
+    const categoryClass =
       Burnout.categoryClass(
         entry.category
       );
 
+
     box.classList.remove('hidden');
 
+
     box.innerHTML = `
+
       <h3>
-        <i class="fa-solid fa-fire-flame-curved"></i>
+        <i class="fa-solid fa-chart-line"></i>
         Today's Burnout Risk
       </h3>
 
@@ -700,7 +847,7 @@
         </span>
       </div>
 
-      <span class="category-badge ${cls}">
+      <span class="category-badge ${categoryClass}">
         ${entry.category}
       </span>
 
@@ -708,7 +855,8 @@
         class="muted small"
         style="margin-top:12px;"
       >
-        View your dashboard for personalized recommendations.
+        Your WellTrack dashboard contains
+        personalized insights and recommendations.
       </p>
 
       <button
@@ -719,7 +867,9 @@
         <i class="fa-solid fa-gauge-high"></i>
         Go to Dashboard
       </button>
+
     `;
+
 
     box.scrollIntoView({
       behavior: 'smooth',
@@ -728,11 +878,12 @@
   }
 
 
-  /* ============================================================
+  /* ==========================================================
      DASHBOARD
-  ============================================================ */
+     ========================================================== */
 
   function renderDashboard() {
+
     const profile =
       Storage.getProfile();
 
@@ -747,81 +898,78 @@
 
     const todayEntry =
       entries.find(
-        (entry) => entry.date === today
+        entry => entry.date === today
       ) || null;
 
     const shown =
       todayEntry || latest;
 
 
-    /*
-      Greeting
-    */
+    /* ---------- Greeting ---------- */
 
-    const greeting =
-      $('#greeting-text');
+    if (profile) {
 
-    const greetingSub =
-      $('#greeting-sub');
-
-    if (profile && profile.name) {
       const hour =
         new Date().getHours();
 
-      const part =
+      const greeting =
         hour < 12
           ? 'Good morning'
           : hour < 17
             ? 'Good afternoon'
             : 'Good evening';
 
-      if (greeting) {
-        greeting.textContent =
-          `${part}, ${profile.name.split(' ')[0]}!`;
+
+      const firstName =
+        (profile.name || 'there')
+          .split(' ')[0];
+
+
+      const greetingElement =
+        $('#greeting-text');
+
+      if (greetingElement) {
+
+        greetingElement.textContent =
+          `${greeting}, ${firstName}!`;
       }
 
-      if (greetingSub) {
-        const academicLevel =
-          profile.year || 'Student';
 
-        greetingSub.textContent =
-          `${academicLevel} · ${
+      const subtitle =
+        $('#greeting-sub');
+
+      if (subtitle) {
+
+        subtitle.textContent =
+          `${profile.course || 'Student'} · ${profile.year || ''}` +
+          (
             todayEntry
-              ? 'Checked in today ✓'
-              : 'You haven’t checked in today'
-          }`;
-      }
-    } else {
-      if (greeting) {
-        greeting.textContent =
-          'Welcome to WellTrack!';
-      }
-
-      if (greetingSub) {
-        greetingSub.textContent =
-          'Complete your profile to personalize your experience.';
+              ? ' · Checked in today ✓'
+              : ' · You haven’t checked in today'
+          );
       }
     }
 
 
-    /*
-      Risk alert
-    */
+    /* ---------- Risk Alert ---------- */
 
     const alertBox =
       $('#risk-alert');
 
     if (alertBox) {
+
       if (
         shown &&
         shown.category === 'High Risk'
       ) {
+
         alertBox.className =
           'risk-alert high';
 
         alertBox.innerHTML = `
           <i class="fa-solid fa-triangle-exclamation"></i>
-          High burnout risk detected. Please review the recommendations below and consider easing your schedule.
+          High burnout risk detected.
+          Review your recommendations and consider easing your schedule.
         `;
       }
 
@@ -829,85 +977,86 @@
         shown &&
         shown.category === 'Moderate Risk'
       ) {
+
         alertBox.className =
           'risk-alert moderate';
 
         alertBox.innerHTML = `
           <i class="fa-solid fa-circle-exclamation"></i>
-          Moderate burnout risk — a few small changes can keep you in the healthy zone.
+          Moderate burnout risk detected.
+          A few changes can help you return to the healthy zone.
         `;
       }
 
       else {
+
         alertBox.className =
           'risk-alert hidden';
       }
     }
 
 
-    /*
-      Score + category
-    */
+    /* ---------- Score ---------- */
+
+    const scoreElement =
+      $('#burnout-score-value');
+
+    const categoryElement =
+      $('#burnout-category');
+
+    const explainElement =
+      $('#burnout-explain');
+
 
     if (shown) {
-      const score =
-        $('#burnout-score-value');
 
-      if (score) {
-        score.textContent =
+      if (scoreElement) {
+        scoreElement.textContent =
           shown.score;
       }
 
-      const badge =
-        $('#burnout-category');
 
-      if (badge) {
-        badge.textContent =
+      if (categoryElement) {
+
+        categoryElement.textContent =
           shown.category;
 
-        badge.className =
+        categoryElement.className =
           'category-badge ' +
           Burnout.categoryClass(
             shown.category
           );
       }
 
-      const explanation =
-        $('#burnout-explain');
 
-      if (explanation) {
-        explanation.textContent =
+      if (explainElement) {
+
+        explainElement.textContent =
           todayEntry
             ? 'Based on today’s check-in.'
             : `Based on your last check-in (${formatDate(shown.date)}).`;
       }
-    }
 
-    else {
-      const score =
-        $('#burnout-score-value');
+    } else {
 
-      if (score) {
-        score.textContent = '–';
+      if (scoreElement) {
+        scoreElement.textContent = '–';
       }
 
-      const badge =
-        $('#burnout-category');
 
-      if (badge) {
-        badge.textContent =
+      if (categoryElement) {
+
+        categoryElement.textContent =
           'No data';
 
-        badge.className =
+        categoryElement.className =
           'category-badge';
       }
 
-      const explanation =
-        $('#burnout-explain');
 
-      if (explanation) {
-        explanation.textContent =
-          'Complete a daily check-in to compute your burnout risk.';
+      if (explainElement) {
+        explainElement.textContent =
+          'Complete your first check-in to see your burnout risk.';
       }
     }
 
@@ -917,175 +1066,137 @@
     );
 
 
-    /*
-      Today's snapshot
-    */
+    /* ---------- Snapshot ---------- */
 
-    const snapMood =
-      $('#snap-mood');
+    setText(
+      '#snap-mood',
+      shown
+        ? `${MOOD_EMOJI[shown.mood]} ${MOOD_LABEL[shown.mood]}`
+        : '–'
+    );
 
-    if (snapMood) {
-      snapMood.textContent =
-        shown
-          ? `${MOOD_EMOJI[shown.mood]} ${MOOD_LABEL[shown.mood]}`
-          : '–';
-    }
+    setText(
+      '#snap-stress',
+      shown
+        ? `${shown.stress}/10`
+        : '–'
+    );
 
+    setText(
+      '#snap-sleep',
+      shown
+        ? `${shown.sleep} h`
+        : '–'
+    );
 
-    const snapStress =
-      $('#snap-stress');
+    setText(
+      '#snap-study',
+      shown
+        ? `${shown.study} h`
+        : '–'
+    );
 
-    if (snapStress) {
-      snapStress.textContent =
-        shown
-          ? `${shown.stress}/10`
-          : '–';
-    }
+    setText(
+      '#snap-motivation',
+      shown
+        ? `${shown.motivation}/10`
+        : '–'
+    );
 
-
-    const snapSleep =
-      $('#snap-sleep');
-
-    if (snapSleep) {
-      snapSleep.textContent =
-        shown
-          ? `${shown.sleep} h`
-          : '–';
-    }
-
-
-    const snapStudy =
-      $('#snap-study');
-
-    if (snapStudy) {
-      snapStudy.textContent =
-        shown
-          ? `${shown.study} h`
-          : '–';
-    }
+    setText(
+      '#snap-total',
+      entries.length
+    );
 
 
-    const snapMotivation =
-      $('#snap-motivation');
+    /* ---------- Recommendations ---------- */
 
-    if (snapMotivation) {
-      snapMotivation.textContent =
-        shown
-          ? `${shown.motivation}/10`
-          : '–';
-    }
-
-
-    const snapTotal =
-      $('#snap-total');
-
-    if (snapTotal) {
-      snapTotal.textContent =
-        entries.length;
-    }
-
-
-    /*
-      Recommendations
-    */
-
-    const recommendations =
-      Burnout.recommendations(
-        shown,
-        entries
-      );
-
-    const recommendationsList =
+    const recommendationList =
       $('#recommendations-list');
 
-    if (recommendationsList) {
-      recommendationsList.innerHTML =
+    if (recommendationList) {
+
+      const recommendations =
+        Burnout.recommendations(
+          shown,
+          entries
+        );
+
+
+      recommendationList.innerHTML =
         recommendations
-          .map(
-            (recommendation) => `
-              <li class="rec-item ${recommendation.level}">
-                <i class="fa-solid ${recommendation.icon}"></i>
-                <span>
-                  ${escapeHtml(
-                    recommendation.text
-                  )}
-                </span>
-              </li>
-            `
-          )
+          .map(item => `
+            <li class="rec-item ${item.level}">
+              <i class="fa-solid ${item.icon}"></i>
+              <span>${escapeHtml(item.text)}</span>
+            </li>
+          `)
           .join('');
     }
 
 
-    /*
-      Progress
-    */
+    /* ---------- Streak ---------- */
 
     const currentStreak =
       Achievements.currentStreak(
         entries
       );
 
-    const streakCount =
-      $('#streak-count');
+    setText(
+      '#streak-count',
+      currentStreak
+    );
 
-    if (streakCount) {
-      streakCount.textContent =
-        currentStreak;
-    }
+    setText(
+      '#p-current-streak',
+      currentStreak
+    );
 
+    setText(
+      '#p-longest-streak',
+      Achievements.longestStreak(entries)
+    );
 
-    const currentStreakDisplay =
-      $('#p-current-streak');
+    setText(
+      '#p-total-checkins',
+      entries.length
+    );
 
-    if (currentStreakDisplay) {
-      currentStreakDisplay.textContent =
-        currentStreak;
-    }
-
-
-    const longestStreak =
-      $('#p-longest-streak');
-
-    if (longestStreak) {
-      longestStreak.textContent =
-        Achievements.longestStreak(
-          entries
-        );
-    }
-
-
-    const totalCheckins =
-      $('#p-total-checkins');
-
-    if (totalCheckins) {
-      totalCheckins.textContent =
-        entries.length;
-    }
+    setText(
+      '#p-consistency',
+      Achievements.consistency(
+        entries,
+        30
+      ) + '%'
+    );
 
 
-    const consistency =
-      $('#p-consistency');
+    /* ---------- Week ---------- */
 
-    if (consistency) {
-      consistency.textContent =
-        Achievements.consistency(
-          entries,
-          30
-        ) + '%';
-    }
+    renderWeekDots(entries);
 
 
-    /*
-      Last 7 days
-    */
+    /* ---------- Mini trend ---------- */
 
-    const dateSet =
+    renderMiniTrend(entries);
+  }
+
+
+  function renderWeekDots(entries) {
+
+    const container =
+      $('#week-dots');
+
+    if (!container) return;
+
+
+    const dates =
       new Set(
         entries.map(
-          (entry) => entry.date
+          entry => entry.date
         )
       );
+
 
     const dayNames = [
       'Su',
@@ -1097,100 +1208,120 @@
       'Sa'
     ];
 
-    let dots = '';
+
+    let html = '';
+
 
     for (let i = 6; i >= 0; i--) {
-      const dateStr =
-        Storage.todayStr(-i);
 
       const date =
+        Storage.todayStr(-i);
+
+      const dateObject =
         new Date(
-          `${dateStr}T00:00:00`
+          date + 'T00:00:00'
         );
 
-      const done =
-        dateSet.has(dateStr);
+      const completed =
+        dates.has(date);
 
-      dots += `
+
+      html += `
         <span
-          class="wd ${done ? 'done' : ''} ${
-            i === 0 ? 'today' : ''
-          }"
-          title="${dateStr}"
+          class="wd
+            ${completed ? 'done' : ''}
+            ${i === 0 ? 'today' : ''}"
+          title="${date}"
         >
-          ${done ? '✓' : dayNames[date.getDay()]}
+          ${completed
+            ? '✓'
+            : dayNames[dateObject.getDay()]
+          }
         </span>
       `;
     }
 
-    const weekDots =
-      $('#week-dots');
 
-    if (weekDots) {
-      weekDots.innerHTML =
-        dots;
-    }
-
-
-    renderMiniTrend(entries);
+    container.innerHTML = html;
   }
 
 
-  /* ============================================================
+  /* ==========================================================
      GAUGE
-  ============================================================ */
+     ========================================================== */
 
   function renderGauge(score) {
+
     const canvas =
       $('#gauge-chart');
 
     if (!canvas) return;
 
-    const c =
+
+    const colors =
       chartColors();
 
-    const color =
-      score < 40
-        ? c.success
-        : score < 65
-          ? c.warning
-          : c.danger;
+
+    let color =
+      colors.primary;
+
+
+    if (score < 40) {
+      color = colors.success;
+    }
+
+    else if (score < 65) {
+      color = colors.warning;
+    }
+
+    else {
+      color = colors.danger;
+    }
+
 
     destroyChart('gauge');
 
+
     charts.gauge =
       new Chart(canvas, {
+
         type: 'doughnut',
 
         data: {
-          datasets: [
-            {
-              data: [
-                score,
-                100 - score
-              ],
 
-              backgroundColor: [
-                color,
-                c.surface2
-              ],
+          datasets: [{
 
-              borderWidth: 0,
+            data: [
+              score,
+              100 - score
+            ],
 
-              borderRadius: 8
-            }
-          ]
+            backgroundColor: [
+              color,
+              'rgba(255,255,255,0.06)'
+            ],
+
+            borderWidth: 0,
+
+            borderRadius: 8
+          }]
         },
 
+
         options: {
+
           rotation: -90,
+
           circumference: 180,
+
           cutout: '72%',
 
           responsive: true,
+
           maintainAspectRatio: false,
 
           plugins: {
+
             legend: {
               display: false
             },
@@ -1208,62 +1339,575 @@
   }
 
 
-  /* ============================================================
+  /* ==========================================================
      MINI TREND
-  ============================================================ */
+     ========================================================== */
 
   function renderMiniTrend(entries) {
+
     const canvas =
       $('#mini-trend-chart');
 
     if (!canvas) return;
 
-    const c =
+
+    const colors =
       chartColors();
 
     const days =
       lastNDays(14);
 
+
     const map =
       Object.fromEntries(
         entries.map(
-          (entry) => [
+          entry => [
             entry.date,
             entry
           ]
         )
       );
 
+
     const data =
       days.map(
-        (day) =>
-          map[day]
-            ? map[day].score
+        date =>
+          map[date]
+            ? map[date].score
             : null
       );
 
+
     destroyChart('mini');
+
 
     charts.mini =
       new Chart(canvas, {
+
         type: 'line',
 
         data: {
+
           labels:
             days.map(shortLabel),
 
-          datasets: [
-            {
-              label: 'Burnout score',
+          datasets: [{
 
-              data,
+            label:
+              'Burnout score',
+
+            data,
+
+            borderColor:
+              colors.primary,
+
+            backgroundColor:
+              hexToRgba(
+                colors.primary,
+                0.14
+              ),
+
+            fill: true,
+
+            tension: 0.35,
+
+            spanGaps: true,
+
+            pointRadius: 3,
+
+            pointBackgroundColor:
+              colors.primary,
+
+            pointBorderWidth: 0
+          }]
+        },
+
+
+        options:
+          baseLineOptions(
+            colors,
+            0,
+            100
+          )
+      });
+  }
+
+
+  /* ==========================================================
+     ANALYTICS
+     ========================================================== */
+
+  function renderAnalytics() {
+
+    const entries =
+      Storage.getEntries();
+
+    const empty =
+      entries.length === 0;
+
+
+    const emptyElement =
+      $('#analytics-empty');
+
+    const contentElement =
+      $('#analytics-content');
+
+
+    if (emptyElement) {
+      emptyElement.classList.toggle(
+        'hidden',
+        !empty
+      );
+    }
+
+
+    if (contentElement) {
+      contentElement.classList.toggle(
+        'hidden',
+        empty
+      );
+    }
+
+
+    if (empty) return;
+
+
+    const colors =
+      chartColors();
+
+
+    const days =
+      lastNDays(
+        analyticsRange
+      );
+
+
+    const map =
+      Object.fromEntries(
+        entries.map(
+          entry => [
+            entry.date,
+            entry
+          ]
+        )
+      );
+
+
+    const labels =
+      days.map(shortLabel);
+
+
+    const value =
+      (date, key) =>
+        map[date]
+          ? map[date][key]
+          : null;
+
+
+    /* ---------- Summary ---------- */
+
+    const current =
+      entries.filter(
+        entry =>
+          days.includes(entry.date)
+      );
+
+
+    const previousDays =
+      lastNDays(
+        analyticsRange,
+        analyticsRange
+      );
+
+
+    const previous =
+      entries.filter(
+        entry =>
+          previousDays.includes(
+            entry.date
+          )
+      );
+
+
+    const currentAverage =
+      Burnout.averages(current);
+
+    const previousAverage =
+      Burnout.averages(previous);
+
+
+    renderSummaryCards(
+      currentAverage,
+      previousAverage
+    );
+
+
+    /* ========================================================
+       BURNOUT CHART
+       ======================================================== */
+
+    destroyChart('burnout');
+
+
+    charts.burnout =
+      new Chart(
+        $('#chart-burnout'),
+        {
+
+          type: 'line',
+
+          data: {
+
+            labels,
+
+            datasets: [{
+
+              label:
+                'Burnout score',
+
+              data:
+                days.map(
+                  date =>
+                    value(
+                      date,
+                      'score'
+                    )
+                ),
 
               borderColor:
-                c.primary,
+                colors.primary,
 
               backgroundColor:
                 hexToRgba(
-                  c.primary,
+                  colors.primary,
+                  0.12
+                ),
+
+              fill: true,
+
+              tension: 0.35,
+
+              spanGaps: true,
+
+              pointRadius: 4,
+
+              pointBackgroundColor:
+                days.map(date => {
+
+                  const score =
+                    value(
+                      date,
+                      'score'
+                    );
+
+                  if (score == null) {
+                    return colors.text;
+                  }
+
+                  if (score < 40) {
+                    return colors.success;
+                  }
+
+                  if (score < 65) {
+                    return colors.warning;
+                  }
+
+                  return colors.danger;
+                }),
+
+              pointBorderWidth: 0
+            }]
+          },
+
+
+          options:
+            baseLineOptions(
+              colors,
+              0,
+              100
+            )
+        }
+      );
+
+
+    /* ========================================================
+       MOOD + MOTIVATION
+       ======================================================== */
+
+    destroyChart('mood');
+
+
+    charts.mood =
+      new Chart(
+        $('#chart-mood'),
+        {
+
+          type: 'line',
+
+          data: {
+
+            labels,
+
+            datasets: [
+
+              {
+
+                label:
+                  'Mood (1–5)',
+
+                data:
+                  days.map(
+                    date =>
+                      value(
+                        date,
+                        'mood'
+                      )
+                  ),
+
+                borderColor:
+                  colors.primary,
+
+                tension: 0.35,
+
+                spanGaps: true,
+
+                pointRadius: 3,
+
+                pointBackgroundColor:
+                  colors.primary,
+
+                yAxisID: 'y'
+              },
+
+              {
+
+                label:
+                  'Motivation (1–10)',
+
+                data:
+                  days.map(
+                    date =>
+                      value(
+                        date,
+                        'motivation'
+                      )
+                  ),
+
+                borderColor:
+                  colors.purple,
+
+                tension: 0.35,
+
+                spanGaps: true,
+
+                pointRadius: 3,
+
+                pointBackgroundColor:
+                  colors.purple,
+
+                yAxisID: 'y1'
+              }
+            ]
+          },
+
+
+          options: {
+
+            ...baseLineOptions(
+              colors,
+              0,
+              5,
+              false
+            ),
+
+            scales: {
+
+              x:
+                axisX(colors),
+
+              y: {
+
+                min: 0,
+
+                max: 5,
+
+                ticks: {
+                  color: colors.text
+                },
+
+                grid: {
+                  color: colors.grid
+                }
+              },
+
+              y1: {
+
+                min: 0,
+
+                max: 10,
+
+                position: 'right',
+
+                ticks: {
+                  color: colors.text
+                },
+
+                grid: {
+                  display: false
+                }
+              }
+            }
+          }
+        }
+      );
+
+
+    /* ========================================================
+       SLEEP + STUDY
+       ======================================================== */
+
+    destroyChart('sleepStudy');
+
+
+    charts.sleepStudy =
+      new Chart(
+        $('#chart-sleep-study'),
+        {
+
+          type: 'bar',
+
+          data: {
+
+            labels,
+
+            datasets: [
+
+              {
+
+                label:
+                  'Sleep (h)',
+
+                data:
+                  days.map(
+                    date =>
+                      value(
+                        date,
+                        'sleep'
+                      )
+                  ),
+
+                backgroundColor:
+                  hexToRgba(
+                    colors.primary,
+                    0.75
+                  ),
+
+                borderRadius: 6
+              },
+
+              {
+
+                label:
+                  'Study (h)',
+
+                data:
+                  days.map(
+                    date =>
+                      value(
+                        date,
+                        'study'
+                      )
+                  ),
+
+                backgroundColor:
+                  hexToRgba(
+                    colors.purple,
+                    0.65
+                  ),
+
+                borderRadius: 6
+              }
+            ]
+          },
+
+
+          options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            plugins: {
+
+              legend: {
+
+                labels: {
+                  color: colors.text
+                }
+              }
+            },
+
+            scales: {
+
+              x:
+                axisX(colors),
+
+              y: {
+
+                beginAtZero: true,
+
+                ticks: {
+                  color: colors.text
+                },
+
+                grid: {
+                  color: colors.grid
+                }
+              }
+            }
+          }
+        }
+      );
+
+
+    /* ========================================================
+       STRESS
+       ======================================================== */
+
+    destroyChart('stress');
+
+
+    charts.stress =
+      new Chart(
+        $('#chart-stress'),
+        {
+
+          type: 'line',
+
+          data: {
+
+            labels,
+
+            datasets: [{
+
+              label:
+                'Stress (1–10)',
+
+              data:
+                days.map(
+                  date =>
+                    value(
+                      date,
+                      'stress'
+                    )
+                ),
+
+              borderColor:
+                colors.purple,
+
+              backgroundColor:
+                hexToRgba(
+                  colors.purple,
                   0.12
                 ),
 
@@ -1276,512 +1920,47 @@
               pointRadius: 3,
 
               pointBackgroundColor:
-                c.primary
-            }
-          ]
-        },
-
-        options:
-          baseLineOptions(
-            c,
-            0,
-            100
-          )
-      });
-  }
+                colors.purple
+            }]
+          },
 
 
-  /* ============================================================
-     ANALYTICS
-  ============================================================ */
-
-  function renderAnalytics() {
-    const entries =
-      Storage.getEntries();
-
-    const empty =
-      entries.length === 0;
-
-    const emptyBox =
-      $('#analytics-empty');
-
-    const content =
-      $('#analytics-content');
-
-    if (emptyBox) {
-      emptyBox.classList.toggle(
-        'hidden',
-        !empty
-      );
-    }
-
-    if (content) {
-      content.classList.toggle(
-        'hidden',
-        empty
-      );
-    }
-
-    if (empty) return;
-
-
-    const c =
-      chartColors();
-
-    const days =
-      lastNDays(
-        analyticsRange
+          options:
+            baseLineOptions(
+              colors,
+              0,
+              10
+            )
+        }
       );
 
-    const map =
-      Object.fromEntries(
-        entries.map(
-          (entry) => [
-            entry.date,
-            entry
-          ]
-        )
-      );
 
-    const labels =
-      days.map(shortLabel);
-
-    const val =
-      (day, key) =>
-        map[day]
-          ? map[day][key]
-          : null;
-
-
-    /*
-      Summary
-    */
-
-    const inRange =
-      entries.filter(
-        (entry) =>
-          days.includes(
-            entry.date
-          )
-      );
-
-    const previousDays =
-      lastNDays(
-        analyticsRange,
-        analyticsRange
-      );
-
-    const inPrevious =
-      entries.filter(
-        (entry) =>
-          previousDays.includes(
-            entry.date
-          )
-      );
-
-    const avgNow =
-      Burnout.averages(
-        inRange
-      );
-
-    const avgPrevious =
-      Burnout.averages(
-        inPrevious
-      );
-
-    renderSummaryCards(
-      avgNow,
-      avgPrevious
-    );
-
-
-    /*
-      Burnout chart
-    */
-
-    const burnoutCanvas =
-      $('#chart-burnout');
-
-    if (burnoutCanvas) {
-      destroyChart('burnout');
-
-      charts.burnout =
-        new Chart(
-          burnoutCanvas,
-          {
-            type: 'line',
-
-            data: {
-              labels,
-
-              datasets: [
-                {
-                  label:
-                    'Burnout score',
-
-                  data:
-                    days.map(
-                      (day) =>
-                        val(
-                          day,
-                          'score'
-                        )
-                    ),
-
-                  borderColor:
-                    c.danger,
-
-                  backgroundColor:
-                    hexToRgba(
-                      c.danger,
-                      0.1
-                    ),
-
-                  fill: true,
-
-                  tension: 0.35,
-
-                  spanGaps: true,
-
-                  pointRadius: 3,
-
-                  pointBackgroundColor:
-                    days.map(
-                      (day) => {
-                        const score =
-                          val(
-                            day,
-                            'score'
-                          );
-
-                        if (
-                          score == null
-                        ) {
-                          return c.text;
-                        }
-
-                        return score < 40
-                          ? c.success
-                          : score < 65
-                            ? c.warning
-                            : c.danger;
-                      }
-                    )
-                }
-              ]
-            },
-
-            options:
-              baseLineOptions(
-                c,
-                0,
-                100
-              )
-          }
-        );
-    }
-
-
-    /*
-      Mood + Motivation
-    */
-
-    const moodCanvas =
-      $('#chart-mood');
-
-    if (moodCanvas) {
-      destroyChart('mood');
-
-      charts.mood =
-        new Chart(
-          moodCanvas,
-          {
-            type: 'line',
-
-            data: {
-              labels,
-
-              datasets: [
-                {
-                  label:
-                    'Mood (1–5)',
-
-                  data:
-                    days.map(
-                      (day) =>
-                        val(
-                          day,
-                          'mood'
-                        )
-                    ),
-
-                  borderColor:
-                    c.primary,
-
-                  tension: 0.35,
-
-                  spanGaps: true,
-
-                  pointRadius: 3,
-
-                  yAxisID: 'y'
-                },
-
-                {
-                  label:
-                    'Motivation (1–10)',
-
-                  data:
-                    days.map(
-                      (day) =>
-                        val(
-                          day,
-                          'motivation'
-                        )
-                    ),
-
-                  borderColor:
-                    c.purple,
-
-                  tension: 0.35,
-
-                  spanGaps: true,
-
-                  pointRadius: 3,
-
-                  yAxisID: 'y1'
-                }
-              ]
-            },
-
-            options: {
-              ...baseLineOptions(
-                c,
-                0,
-                5,
-                true
-              ),
-
-              scales: {
-                x: axisX(c),
-
-                y: {
-                  min: 0,
-                  max: 5,
-
-                  ticks: {
-                    color: c.text
-                  },
-
-                  grid: {
-                    color: c.grid
-                  },
-
-                  position: 'left'
-                },
-
-                y1: {
-                  min: 0,
-                  max: 10,
-
-                  ticks: {
-                    color: c.text
-                  },
-
-                  grid: {
-                    display: false
-                  },
-
-                  position: 'right'
-                }
-              }
-            }
-          }
-        );
-    }
-
-
-    /*
-      Sleep vs Study
-    */
-
-    const sleepStudyCanvas =
-      $('#chart-sleep-study');
-
-    if (sleepStudyCanvas) {
-      destroyChart('sleepStudy');
-
-      charts.sleepStudy =
-        new Chart(
-          sleepStudyCanvas,
-          {
-            type: 'bar',
-
-            data: {
-              labels,
-
-              datasets: [
-                {
-                  label:
-                    'Sleep (h)',
-
-                  data:
-                    days.map(
-                      (day) =>
-                        val(
-                          day,
-                          'sleep'
-                        )
-                    ),
-
-                  backgroundColor:
-                    hexToRgba(
-                      c.primary,
-                      0.75
-                    ),
-
-                  borderRadius: 5
-                },
-
-                {
-                  label:
-                    'Study (h)',
-
-                  data:
-                    days.map(
-                      (day) =>
-                        val(
-                          day,
-                          'study'
-                        )
-                    ),
-
-                  backgroundColor:
-                    hexToRgba(
-                      c.warning,
-                      0.75
-                    ),
-
-                  borderRadius: 5
-                }
-              ]
-            },
-
-            options: {
-              responsive: true,
-
-              maintainAspectRatio:
-                false,
-
-              plugins: {
-                legend: {
-                  labels: {
-                    color: c.text
-                  }
-                }
-              },
-
-              scales: {
-                x: axisX(c),
-
-                y: {
-                  beginAtZero: true,
-
-                  ticks: {
-                    color: c.text
-                  },
-
-                  grid: {
-                    color: c.grid
-                  }
-                }
-              }
-            }
-          }
-        );
-    }
-
-
-    /*
-      Stress
-    */
-
-    const stressCanvas =
-      $('#chart-stress');
-
-    if (stressCanvas) {
-      destroyChart('stress');
-
-      charts.stress =
-        new Chart(
-          stressCanvas,
-          {
-            type: 'line',
-
-            data: {
-              labels,
-
-              datasets: [
-                {
-                  label:
-                    'Stress (1–10)',
-
-                  data:
-                    days.map(
-                      (day) =>
-                        val(
-                          day,
-                          'stress'
-                        )
-                    ),
-
-                  borderColor:
-                    c.warning,
-
-                  backgroundColor:
-                    hexToRgba(
-                      c.warning,
-                      0.12
-                    ),
-
-                  fill: true,
-
-                  tension: 0.35,
-
-                  spanGaps: true,
-
-                  pointRadius: 3
-                }
-              ]
-            },
-
-            options:
-              baseLineOptions(
-                c,
-                0,
-                10
-              )
-          }
-        );
-    }
-
-
-    renderPeriodTables(
-      entries
-    );
+    renderPeriodTables(entries);
 
     renderBehaviorChanges(
-      avgNow,
-      avgPrevious
+      currentAverage,
+      previousAverage
     );
   }
 
 
+  /* ==========================================================
+     SUMMARY CARDS
+     ========================================================== */
+
   function renderSummaryCards(
-    now,
+    current,
     previous
   ) {
+
+    const container =
+      $('#summary-cards');
+
+    if (!container) return;
+
+
     const metrics = [
+
       {
         key: 'score',
         label: 'Avg Burnout',
@@ -1826,260 +2005,311 @@
     ];
 
 
-    const container =
-      $('#summary-cards');
-
-    if (!container) return;
-
-
     container.innerHTML =
-      metrics
-        .map((metric) => {
-          const value =
-            now
-              ? now[metric.key]
-              : null;
+      metrics.map(metric => {
 
-          let deltaHtml =
-            '<span class="sc-delta flat">no previous data</span>';
-
-          if (now && previous) {
-            const diff =
-              +(
-                now[metric.key] -
-                previous[metric.key]
-              ).toFixed(1);
-
-            if (diff === 0) {
-              deltaHtml =
-                '<span class="sc-delta flat">— unchanged</span>';
-            }
-
-            else {
-              const arrow =
-                diff > 0
-                  ? '▲'
-                  : '▼';
-
-              let cls =
-                diff > 0
-                  ? 'up'
-                  : 'down';
-
-              if (
-                metric.lowerIsBetter === true
-              ) {
-                cls +=
-                  diff > 0
-                    ? ''
-                    : ' good';
-              }
-
-              else if (
-                metric.lowerIsBetter === false
-              ) {
-                cls =
-                  diff > 0
-                    ? 'up good'
-                    : 'down bad';
-              }
-
-              else {
-                cls =
-                  'flat';
-              }
-
-              deltaHtml = `
-                <span class="sc-delta ${cls}">
-                  ${arrow}
-                  ${Math.abs(diff)}
-                  vs prev.
-                </span>
-              `;
-            }
-          }
-
-          return `
-            <div class="sum-card">
-
-              <div class="sc-label">
-                ${metric.label}
-              </div>
-
-              <div class="sc-value">
-                ${
-                  value != null
-                    ? value + metric.unit
-                    : '–'
-                }
-              </div>
-
-              ${deltaHtml}
-
-            </div>
-          `;
-        })
-        .join('');
-  }
-
-
-  function renderPeriodTables(entries) {
-    const build = (
-      currentEntries,
-      previousEntries,
-      currentLabel,
-      previousLabel
-    ) => {
-      const current =
-        Burnout.averages(
-          currentEntries
-        );
-
-      const previous =
-        Burnout.averages(
-          previousEntries
-        );
-
-      const rows = [
-        [
-          'Check-ins',
+        const value =
           current
-            ? current.n
-            : 0,
+            ? current[metric.key]
+            : null;
+
+
+        let deltaHTML =
+          '<span class="sc-delta flat">no previous data</span>';
+
+
+        if (
+          current &&
           previous
-            ? previous.n
-            : 0,
-          false
-        ],
+        ) {
 
-        [
-          'Avg burnout',
-          current
-            ? current.score
-            : '–',
-          previous
-            ? previous.score
-            : '–',
-          true
-        ],
-
-        [
-          'Avg stress',
-          current
-            ? current.stress
-            : '–',
-          previous
-            ? previous.stress
-            : '–',
-          true
-        ],
-
-        [
-          'Avg sleep (h)',
-          current
-            ? current.sleep
-            : '–',
-          previous
-            ? previous.sleep
-            : '–',
-          false
-        ],
-
-        [
-          'Avg study (h)',
-          current
-            ? current.study
-            : '–',
-          previous
-            ? previous.study
-            : '–',
-          null
-        ],
-
-        [
-          'Avg motivation',
-          current
-            ? current.motivation
-            : '–',
-          previous
-            ? previous.motivation
-            : '–',
-          false
-        ]
-      ];
+          const difference =
+            +(
+              current[metric.key] -
+              previous[metric.key]
+            ).toFixed(1);
 
 
-      let html = `
-        <tr>
-          <th>Metric</th>
-          <th>${currentLabel}</th>
-          <th>${previousLabel}</th>
-        </tr>
-      `;
+          if (difference === 0) {
+
+            deltaHTML =
+              '<span class="sc-delta flat">— unchanged</span>';
+
+          } else {
+
+            const arrow =
+              difference > 0
+                ? '▲'
+                : '▼';
 
 
-      rows.forEach(
-        ([
-          label,
-          currentValue,
-          previousValue,
-          lowerBetter
-        ]) => {
-          let cls = '';
+            let className =
+              difference > 0
+                ? 'up'
+                : 'down';
 
-          if (
-            typeof currentValue === 'number' &&
-            typeof previousValue === 'number' &&
-            lowerBetter !== null &&
-            label !== 'Check-ins'
-          ) {
+
             if (
-              currentValue <
-              previousValue
+              metric.lowerIsBetter === true
             ) {
-              cls =
-                lowerBetter
-                  ? 'delta-good'
-                  : 'delta-bad';
+
+              className +=
+                difference > 0
+                  ? ''
+                  : ' good';
+
             }
 
             else if (
-              currentValue >
-              previousValue
+              metric.lowerIsBetter === false
             ) {
-              cls =
-                lowerBetter
-                  ? 'delta-bad'
-                  : 'delta-good';
+
+              className =
+                difference > 0
+                  ? 'up good'
+                  : 'down bad';
+
             }
+
+            else {
+
+              className =
+                'flat';
+            }
+
+
+            deltaHTML = `
+              <span class="sc-delta ${className}">
+                ${arrow}
+                ${Math.abs(difference)}
+                vs prev.
+              </span>
+            `;
           }
-
-          html += `
-            <tr>
-              <td>${label}</td>
-              <td class="${cls}">
-                ${currentValue}
-              </td>
-              <td>
-                ${previousValue}
-              </td>
-            </tr>
-          `;
         }
-      );
-
-      return html;
-    };
 
 
-    const weekCurrent =
+        return `
+          <div class="sum-card">
+
+            <div class="sc-label">
+              ${metric.label}
+            </div>
+
+            <div class="sc-value">
+              ${
+                value != null
+                  ? value + metric.unit
+                  : '–'
+              }
+            </div>
+
+            ${deltaHTML}
+
+          </div>
+        `;
+
+      }).join('');
+  }
+
+
+  /* ==========================================================
+     PERIOD TABLES
+     ========================================================== */
+
+  function renderPeriodTables(entries) {
+
+    const build =
+      (
+        currentEntries,
+        previousEntries,
+        currentLabel,
+        previousLabel
+      ) => {
+
+        const current =
+          Burnout.averages(
+            currentEntries
+          );
+
+        const previous =
+          Burnout.averages(
+            previousEntries
+          );
+
+
+        const rows = [
+
+          [
+            'Check-ins',
+            current
+              ? current.n
+              : 0,
+
+            previous
+              ? previous.n
+              : 0,
+
+            false
+          ],
+
+          [
+            'Avg burnout',
+            current
+              ? current.score
+              : '–',
+
+            previous
+              ? previous.score
+              : '–',
+
+            true
+          ],
+
+          [
+            'Avg stress',
+            current
+              ? current.stress
+              : '–',
+
+            previous
+              ? previous.stress
+              : '–',
+
+            true
+          ],
+
+          [
+            'Avg sleep (h)',
+            current
+              ? current.sleep
+              : '–',
+
+            previous
+              ? previous.sleep
+              : '–',
+
+            false
+          ],
+
+          [
+            'Avg study (h)',
+            current
+              ? current.study
+              : '–',
+
+            previous
+              ? previous.study
+              : '–',
+
+            null
+          ],
+
+          [
+            'Avg motivation',
+            current
+              ? current.motivation
+              : '–',
+
+            previous
+              ? previous.motivation
+              : '–',
+
+            false
+          ]
+        ];
+
+
+        let html = `
+          <tr>
+            <th>Metric</th>
+            <th>${currentLabel}</th>
+            <th>${previousLabel}</th>
+          </tr>
+        `;
+
+
+        rows.forEach(
+          ([
+            label,
+            currentValue,
+            previousValue,
+            lowerBetter
+          ]) => {
+
+            let className = '';
+
+
+            if (
+              typeof currentValue ===
+                'number' &&
+
+              typeof previousValue ===
+                'number' &&
+
+              lowerBetter !== null &&
+
+              label !== 'Check-ins'
+            ) {
+
+              if (
+                currentValue <
+                previousValue
+              ) {
+
+                className =
+                  lowerBetter
+                    ? 'delta-good'
+                    : 'delta-bad';
+
+              }
+
+              else if (
+                currentValue >
+                previousValue
+              ) {
+
+                className =
+                  lowerBetter
+                    ? 'delta-bad'
+                    : 'delta-good';
+              }
+            }
+
+
+            html += `
+              <tr>
+
+                <td>
+                  ${label}
+                </td>
+
+                <td class="${className}">
+                  ${currentValue}
+                </td>
+
+                <td>
+                  ${previousValue}
+                </td>
+
+              </tr>
+            `;
+          }
+        );
+
+
+        return html;
+      };
+
+
+    const weeklyCurrent =
       entriesBetween(
         entries,
         6,
         0
       );
 
-    const weekPrevious =
+    const weeklyPrevious =
       entriesBetween(
         entries,
         13,
@@ -2091,24 +2321,25 @@
       $('#weekly-table');
 
     if (weeklyTable) {
+
       weeklyTable.innerHTML =
         build(
-          weekCurrent,
-          weekPrevious,
+          weeklyCurrent,
+          weeklyPrevious,
           'This week',
           'Last week'
         );
     }
 
 
-    const monthCurrent =
+    const monthlyCurrent =
       entriesBetween(
         entries,
         29,
         0
       );
 
-    const monthPrevious =
+    const monthlyPrevious =
       entriesBetween(
         entries,
         59,
@@ -2120,10 +2351,11 @@
       $('#monthly-table');
 
     if (monthlyTable) {
+
       monthlyTable.innerHTML =
         build(
-          monthCurrent,
-          monthPrevious,
+          monthlyCurrent,
+          monthlyPrevious,
           'This month',
           'Last month'
         );
@@ -2131,21 +2363,32 @@
   }
 
 
+  /* ==========================================================
+     BEHAVIOR CHANGES
+     ========================================================== */
+
   function renderBehaviorChanges(
-    now,
+    current,
     previous
   ) {
+
     const box =
       $('#behavior-changes');
 
     if (!box) return;
 
 
-    if (!now || !previous) {
+    if (
+      !current ||
+      !previous
+    ) {
+
       box.innerHTML = `
         <div class="bc-item neutral">
           <i class="fa-solid fa-circle-info"></i>
-          Keep checking in — behavior-change insights appear once you have data across two periods.
+          Keep checking in — behavior insights
+          appear once you have data across
+          two periods.
         </div>
       `;
 
@@ -2157,34 +2400,37 @@
 
 
     const difference =
-      (key) =>
+      key =>
         +(
-          now[key] -
+          current[key] -
           previous[key]
         ).toFixed(1);
 
 
     if (difference('score') >= 8) {
+
       items.push({
         cls: 'bad',
         icon: 'fa-arrow-trend-up',
         text:
-          `Burnout risk rose by ${difference('score')} points versus the previous period — an early warning sign.`
+          `Burnout risk rose by ${difference('score')} points compared with the previous period.`
       });
     }
 
 
     if (difference('score') <= -8) {
+
       items.push({
         cls: 'good',
         icon: 'fa-arrow-trend-down',
         text:
-          `Burnout risk dropped by ${Math.abs(difference('score'))} points — your habits are improving.`
+          `Burnout risk dropped by ${Math.abs(difference('score'))} points. Your recent habits are improving.`
       });
     }
 
 
     if (difference('sleep') <= -0.8) {
+
       items.push({
         cls: 'bad',
         icon: 'fa-bed',
@@ -2195,16 +2441,18 @@
 
 
     if (difference('sleep') >= 0.8) {
+
       items.push({
         cls: 'good',
         icon: 'fa-bed',
         text:
-          `Sleep improved by ${difference('sleep')}h on average. Great recovery habit!`
+          `Sleep improved by ${difference('sleep')}h on average.`
       });
     }
 
 
     if (difference('stress') >= 1) {
+
       items.push({
         cls: 'bad',
         icon: 'fa-bolt',
@@ -2215,6 +2463,7 @@
 
 
     if (difference('stress') <= -1) {
+
       items.push({
         cls: 'good',
         icon: 'fa-spa',
@@ -2225,81 +2474,93 @@
 
 
     if (difference('study') >= 1.5) {
+
       items.push({
         cls: 'neutral',
         icon: 'fa-book-open',
         text:
-          `Study time is up ${difference('study')}h/day — make sure rest keeps pace.`
+          `Study time increased by ${difference('study')}h/day. Make sure recovery keeps pace.`
       });
     }
 
 
     if (difference('motivation') <= -1.5) {
+
       items.push({
         cls: 'bad',
         icon: 'fa-battery-quarter',
         text:
-          `Motivation fell by ${Math.abs(difference('motivation'))} points — a common precursor of burnout.`
+          `Motivation fell by ${Math.abs(difference('motivation'))} points.`
       });
     }
 
 
     if (difference('motivation') >= 1.5) {
+
       items.push({
         cls: 'good',
         icon: 'fa-rocket',
         text:
-          `Motivation is up ${difference('motivation')} points!`
+          `Motivation increased by ${difference('motivation')} points.`
       });
     }
 
 
     if (!items.length) {
+
       items.push({
         cls: 'neutral',
         icon: 'fa-equals',
         text:
-          'Your behavior has been stable compared with the previous period.'
+          'Your behavior has remained relatively stable compared with the previous period.'
       });
     }
 
 
     box.innerHTML =
       items
-        .map(
-          (item) => `
-            <div class="bc-item ${item.cls}">
-              <i class="fa-solid ${item.icon}"></i>
-              ${escapeHtml(item.text)}
-            </div>
-          `
-        )
+        .map(item => `
+          <div class="bc-item ${item.cls}">
+            <i class="fa-solid ${item.icon}"></i>
+            ${escapeHtml(item.text)}
+          </div>
+        `)
         .join('');
   }
 
 
+  /* ==========================================================
+     ANALYTICS RANGE
+     ========================================================== */
+
   function bindAnalytics() {
+
     $$('.range-btn').forEach(
-      (button) => {
+      button => {
+
         button.addEventListener(
           'click',
           () => {
-            $$('.range-btn').forEach(
-              (btn) =>
+
+            $$('.range-btn')
+              .forEach(btn =>
                 btn.classList.remove(
                   'active'
                 )
-            );
+              );
+
 
             button.classList.add(
               'active'
             );
+
 
             analyticsRange =
               parseInt(
                 button.dataset.range,
                 10
               );
+
 
             renderAnalytics();
           }
@@ -2309,12 +2570,13 @@
   }
 
 
-  /* ============================================================
+  /* ==========================================================
      HISTORY
-  ============================================================ */
+     ========================================================== */
 
   function renderHistory() {
-    const searchInput =
+
+    const search =
       $('#history-search');
 
     const riskFilter =
@@ -2323,17 +2585,18 @@
     const moodFilter =
       $('#history-filter-mood');
 
-    const query =
-      searchInput
-        ? searchInput.value
-            .trim()
-            .toLowerCase()
+
+    let query =
+      search
+        ? search.value.trim().toLowerCase()
         : '';
+
 
     const risk =
       riskFilter
         ? riskFilter.value
         : '';
+
 
     const mood =
       moodFilter
@@ -2341,44 +2604,49 @@
         : '';
 
 
-    let list =
+    let entries =
       Storage.getEntries();
 
 
     if (query) {
-      list =
-        list.filter(
-          (entry) =>
-            (entry.notes || '')
-              .toLowerCase()
-              .includes(query) ||
 
-            entry.date.includes(
-              query
-            ) ||
+      entries =
+        entries.filter(entry =>
 
-            formatDate(entry.date)
-              .toLowerCase()
-              .includes(query)
+          (entry.notes || '')
+            .toLowerCase()
+            .includes(query)
+
+          ||
+
+          entry.date
+            .includes(query)
+
+          ||
+
+          formatDate(entry.date)
+            .toLowerCase()
+            .includes(query)
         );
     }
 
 
     if (risk) {
-      list =
-        list.filter(
-          (entry) =>
+
+      entries =
+        entries.filter(
+          entry =>
             entry.category === risk
         );
     }
 
 
     if (mood) {
-      list =
-        list.filter(
-          (entry) =>
-            String(entry.mood) ===
-            mood
+
+      entries =
+        entries.filter(
+          entry =>
+            String(entry.mood) === mood
         );
     }
 
@@ -2387,133 +2655,143 @@
       $('#history-empty');
 
     if (empty) {
+
       empty.classList.toggle(
         'hidden',
-        list.length > 0
+        entries.length > 0
       );
     }
 
 
-    const historyList =
+    const list =
       $('#history-list');
 
-    if (!historyList) return;
+    if (!list) return;
 
 
-    historyList.innerHTML =
-      list
-        .map((entry) => {
-          const date =
-            new Date(
-              `${entry.date}T00:00:00`
-            );
+    list.innerHTML =
+      entries.map(entry => {
 
-          const riskClass =
-            entry.category === 'Healthy'
-              ? 'risk-healthy'
-              : entry.category === 'Moderate Risk'
-                ? 'risk-moderate'
-                : 'risk-high';
+        const date =
+          new Date(
+            entry.date +
+            'T00:00:00'
+          );
 
 
-          return `
-            <div
-              class="h-entry"
-              data-id="${entry.id}"
-            >
+        const riskClass =
+          entry.category === 'Healthy'
+            ? 'risk-healthy'
+            : entry.category === 'Moderate Risk'
+              ? 'risk-moderate'
+              : 'risk-high';
 
-              <div class="h-date">
 
-                <div class="hd-day">
-                  ${date.getDate()}
-                </div>
+        return `
 
-                <div class="hd-mon">
-                  ${date.toLocaleDateString(
-                    undefined,
-                    {
-                      month: 'short'
-                    }
-                  )}
-                  ${date.getFullYear()}
-                </div>
+          <div
+            class="h-entry"
+            data-id="${entry.id}"
+          >
 
+            <div class="h-date">
+
+              <div class="hd-day">
+                ${date.getDate()}
               </div>
 
-
-              <div class="h-body">
-
-                <div class="h-meta">
-
-                  <span
-                    class="h-chip ${riskClass}"
-                  >
-                    ${entry.category} · ${entry.score}
-                  </span>
-
-                  <span class="h-chip">
-                    ${MOOD_EMOJI[entry.mood]}
-                    ${MOOD_LABEL[entry.mood]}
-                  </span>
-
-                  <span class="h-chip">
-                    <i class="fa-solid fa-bolt"></i>
-                    Stress ${entry.stress}/10
-                  </span>
-
-                  <span class="h-chip">
-                    <i class="fa-solid fa-bed"></i>
-                    ${entry.sleep}h
-                  </span>
-
-                  <span class="h-chip">
-                    <i class="fa-solid fa-book-open"></i>
-                    ${entry.study}h
-                  </span>
-
-                  <span class="h-chip">
-                    <i class="fa-solid fa-fire"></i>
-                    Motiv. ${entry.motivation}/10
-                  </span>
-
-                </div>
-
-
-                ${
-                  entry.notes
-                    ? `
-                      <p class="h-notes">
-                        "${escapeHtml(
-                          entry.notes
-                        )}"
-                      </p>
-                    `
-                    : ''
-                }
-
+              <div class="hd-mon">
+                ${date.toLocaleDateString(
+                  undefined,
+                  {
+                    month: 'short'
+                  }
+                )}
+                ${date.getFullYear()}
               </div>
-
-
-              <button
-                class="h-del"
-                title="Delete this record"
-                aria-label="Delete record"
-              >
-                <i class="fa-solid fa-trash"></i>
-              </button>
 
             </div>
-          `;
-        })
-        .join('');
+
+
+            <div class="h-body">
+
+              <div class="h-meta">
+
+                <span
+                  class="h-chip ${riskClass}"
+                >
+                  ${escapeHtml(entry.category)}
+                  · ${entry.score}
+                </span>
+
+
+                <span class="h-chip">
+                  ${MOOD_EMOJI[entry.mood]}
+                  ${MOOD_LABEL[entry.mood]}
+                </span>
+
+
+                <span class="h-chip">
+                  <i class="fa-solid fa-bolt"></i>
+                  Stress ${entry.stress}/10
+                </span>
+
+
+                <span class="h-chip">
+                  <i class="fa-solid fa-bed"></i>
+                  ${entry.sleep}h
+                </span>
+
+
+                <span class="h-chip">
+                  <i class="fa-solid fa-book-open"></i>
+                  ${entry.study}h
+                </span>
+
+
+                <span class="h-chip">
+                  <i class="fa-solid fa-fire"></i>
+                  Motiv. ${entry.motivation}/10
+                </span>
+
+              </div>
+
+
+              ${
+                entry.notes
+                  ? `
+                    <p class="h-notes">
+                      "${escapeHtml(entry.notes)}"
+                    </p>
+                  `
+                  : ''
+              }
+
+            </div>
+
+
+            <button
+              class="h-del"
+              title="Delete this record"
+              aria-label="Delete record"
+            >
+              <i class="fa-solid fa-trash"></i>
+            </button>
+
+          </div>
+        `;
+
+      }).join('');
   }
 
 
   function bindHistory() {
+
     const search =
       $('#history-search');
 
     if (search) {
+
       search.addEventListener(
         'input',
         renderHistory
@@ -2521,22 +2799,24 @@
     }
 
 
-    const risk =
+    const riskFilter =
       $('#history-filter-risk');
 
-    if (risk) {
-      risk.addEventListener(
+    if (riskFilter) {
+
+      riskFilter.addEventListener(
         'change',
         renderHistory
       );
     }
 
 
-    const mood =
+    const moodFilter =
       $('#history-filter-mood');
 
-    if (mood) {
-      mood.addEventListener(
+    if (moodFilter) {
+
+      moodFilter.addEventListener(
         'change',
         renderHistory
       );
@@ -2547,9 +2827,11 @@
       $('#history-list');
 
     if (historyList) {
+
       historyList.addEventListener(
         'click',
-        (event) => {
+        event => {
+
           const button =
             event.target.closest(
               '.h-del'
@@ -2557,54 +2839,62 @@
 
           if (!button) return;
 
+
           const entry =
             button.closest(
               '.h-entry'
             );
 
-          if (!entry) return;
 
           const id =
             entry.dataset.id;
 
 
-          if (
+          const confirmed =
             confirm(
               'Delete this check-in record permanently?'
-            )
-          ) {
-            Storage.deleteEntry(id);
-
-            renderHistory();
-            renderDashboard();
-
-            toast(
-              'Record deleted.',
-              'warning',
-              'fa-trash'
             );
-          }
+
+
+          if (!confirmed) return;
+
+
+          Storage.deleteEntry(id);
+
+
+          renderHistory();
+
+          renderDashboard();
+
+
+          toast(
+            'Record deleted.',
+            'warning',
+            'fa-trash'
+          );
         }
       );
     }
 
 
-    const exportJson =
+    const exportJSON =
       $('#export-json');
 
-    if (exportJson) {
-      exportJson.addEventListener(
+    if (exportJSON) {
+
+      exportJSON.addEventListener(
         'click',
         () => exportData('json')
       );
     }
 
 
-    const exportCsv =
+    const exportCSV =
       $('#export-csv');
 
-    if (exportCsv) {
-      exportCsv.addEventListener(
+    if (exportCSV) {
+
+      exportCSV.addEventListener(
         'click',
         () => exportData('csv')
       );
@@ -2612,15 +2902,18 @@
   }
 
 
-  /* ============================================================
+  /* ==========================================================
      EXPORT
-  ============================================================ */
+     ========================================================== */
 
   function exportData(format) {
+
     const entries =
       Storage.getEntries();
 
+
     if (!entries.length) {
+
       toast(
         'No records to export yet.',
         'warning',
@@ -2634,12 +2927,21 @@
     const profile =
       Storage.getProfile();
 
+
     let blob;
+
     let filename;
 
 
+    /* ---------- JSON ---------- */
+
     if (format === 'json') {
+
       const payload = {
+
+        app:
+          'WellTrack',
+
         exportedAt:
           new Date().toISOString(),
 
@@ -2647,6 +2949,7 @@
 
         entries
       };
+
 
       blob =
         new Blob(
@@ -2663,65 +2966,95 @@
           }
         );
 
+
       filename =
         `welltrack-export-${Storage.todayStr()}.json`;
     }
 
 
+    /* ---------- CSV ---------- */
+
     else {
+
       const headers = [
+
         'date',
+
         'mood',
+
         'mood_label',
+
         'stress',
+
         'sleep_hours',
+
         'study_hours',
+
         'motivation',
+
         'burnout_score',
+
         'category',
+
         'notes'
       ];
 
 
       const csvEscape =
-        (value) => {
-          const text =
+        value => {
+
+          const string =
             String(
               value == null
                 ? ''
                 : value
             );
 
+
           return /[",\n]/.test(
-            text
+            string
           )
-            ? `"${text.replace(
+
+            ? '"' +
+              string.replace(
                 /"/g,
                 '""'
-              )}"`
-            : text;
+              ) +
+              '"'
+
+            : string;
         };
 
 
       const rows =
         entries.map(
-          (entry) =>
-            [
-              entry.date,
-              entry.mood,
-              MOOD_LABEL[
-                entry.mood
-              ],
-              entry.stress,
-              entry.sleep,
-              entry.study,
-              entry.motivation,
-              entry.score,
-              entry.category,
-              entry.notes || ''
-            ]
-              .map(csvEscape)
-              .join(',')
+          entry => [
+
+            entry.date,
+
+            entry.mood,
+
+            MOOD_LABEL[
+              entry.mood
+            ],
+
+            entry.stress,
+
+            entry.sleep,
+
+            entry.study,
+
+            entry.motivation,
+
+            entry.score,
+
+            entry.category,
+
+            entry.notes || ''
+
+          ]
+            .map(csvEscape)
+            .join(',')
         );
 
 
@@ -2733,29 +3066,39 @@
             rows.join('\n')
           ],
           {
-            type: 'text/csv'
+            type:
+              'text/csv'
           }
         );
+
 
       filename =
         `welltrack-export-${Storage.todayStr()}.csv`;
     }
 
 
+    /* ---------- Download ---------- */
+
     const url =
       URL.createObjectURL(blob);
+
 
     const link =
       document.createElement('a');
 
+
     link.href = url;
-    link.download = filename;
+
+    link.download =
+      filename;
+
 
     document.body.appendChild(link);
 
     link.click();
 
     link.remove();
+
 
     URL.revokeObjectURL(url);
 
@@ -2768,40 +3111,50 @@
   }
 
 
-  /* ============================================================
+  /* ==========================================================
      ACHIEVEMENTS
-  ============================================================ */
+     ========================================================== */
 
   function renderAchievements() {
+
     const entries =
       Storage.getEntries();
+
 
     const result =
       Achievements.evaluate(
         entries
       );
 
+
     const badges =
-      result.badges || [];
+      result.badges;
+
 
     const earnedCount =
       badges.filter(
-        (badge) => badge.earned
+        badge => badge.earned
       ).length;
 
 
-    const progressFill =
+    const percentage =
+      badges.length
+        ? Math.round(
+            (
+              earnedCount /
+              badges.length
+            ) * 100
+          )
+        : 0;
+
+
+    const progress =
       $('#ach-progress-fill');
 
-    if (progressFill) {
-      progressFill.style.width =
-        badges.length
-          ? Math.round(
-              (earnedCount /
-                badges.length) *
-                100
-            ) + '%'
-          : '0%';
+    if (progress) {
+
+      progress.style.width =
+        percentage + '%';
     }
 
 
@@ -2809,6 +3162,7 @@
       $('#ach-progress-text');
 
     if (progressText) {
+
       progressText.textContent =
         `${earnedCount} of ${badges.length} badges earned`;
     }
@@ -2821,114 +3175,122 @@
 
 
     grid.innerHTML =
-      badges
-        .map(
-          (badge) => `
-            <div
-              class="badge-card ${
-                badge.earned
-                  ? ''
-                  : 'locked'
-              }"
-            >
+      badges.map(badge => `
 
-              <div class="b-icon">
-                <i
-                  class="fa-solid ${badge.icon}"
-                ></i>
-              </div>
+        <div
+          class="badge-card
+            ${badge.earned ? '' : 'locked'}"
+        >
 
-              <h4>
-                ${escapeHtml(
-                  badge.name
-                )}
-              </h4>
+          <div class="b-icon">
+            <i class="fa-solid ${badge.icon}"></i>
+          </div>
 
-              <p>
-                ${escapeHtml(
-                  badge.desc
-                )}
-              </p>
 
-              ${
-                badge.earned
-                  ? `
-                    <span class="b-earned">
-                      <i class="fa-solid fa-check"></i>
-                      Earned
-                      ${new Date(
-                        badge.earnedAt
-                      ).toLocaleDateString()}
-                    </span>
-                  `
-                  : `
-                    <span
-                      class="b-earned"
-                      style="color:var(--text-muted);"
-                    >
-                      <i class="fa-solid fa-lock"></i>
-                      Locked
-                    </span>
-                  `
-              }
+          <h4>
+            ${escapeHtml(badge.name)}
+          </h4>
 
-            </div>
-          `
-        )
-        .join('');
+
+          <p>
+            ${escapeHtml(badge.desc)}
+          </p>
+
+
+          ${
+            badge.earned
+
+              ? `
+                <span class="b-earned">
+                  <i class="fa-solid fa-check"></i>
+                  Earned
+                  ${new Date(
+                    badge.earnedAt
+                  ).toLocaleDateString()}
+                </span>
+              `
+
+              : `
+                <span
+                  class="b-earned"
+                  style="color:var(--text-muted);"
+                >
+                  <i class="fa-solid fa-lock"></i>
+                  Locked
+                </span>
+              `
+          }
+
+        </div>
+
+      `).join('');
   }
 
 
-  /* ============================================================
-     HELPERS
-  ============================================================ */
+  /* ==========================================================
+     CHART HELPERS
+     ========================================================== */
 
   function destroyChart(key) {
+
     if (charts[key]) {
+
       charts[key].destroy();
+
       charts[key] = null;
     }
   }
 
 
   function baseLineOptions(
-    c,
+    colors,
     min,
     max,
     hideLegend = false
   ) {
+
     return {
+
       responsive: true,
 
-      maintainAspectRatio:
-        false,
+      maintainAspectRatio: false,
 
       plugins: {
+
         legend:
           hideLegend
+
             ? {
                 display: false
               }
+
             : {
                 labels: {
-                  color: c.text
+                  color:
+                    colors.text
                 }
               }
       },
 
       scales: {
-        x: axisX(c),
+
+        x:
+          axisX(colors),
 
         y: {
+
           min,
+
           max,
 
           ticks: {
-            color: c.text
+            color:
+              colors.text
           },
 
           grid: {
-            color: c.grid
+            color:
+              colors.grid
           }
         }
       }
@@ -2936,11 +3298,17 @@
   }
 
 
-  function axisX(c) {
+  function axisX(colors) {
+
     return {
+
       ticks: {
-        color: c.text,
+
+        color:
+          colors.text,
+
         maxTicksLimit: 10,
+
         maxRotation: 0
       },
 
@@ -2951,28 +3319,34 @@
   }
 
 
+  /* ==========================================================
+     DATE HELPERS
+     ========================================================== */
+
   function lastNDays(
-    numberOfDays,
+    number,
     offset = 0
   ) {
-    const output = [];
+
+    const dates = [];
+
 
     for (
       let i =
-        numberOfDays -
-        1 +
-        offset;
+        number - 1 + offset;
 
       i >= offset;
 
       i--
     ) {
-      output.push(
+
+      dates.push(
         Storage.todayStr(-i)
       );
     }
 
-    return output;
+
+    return dates;
   }
 
 
@@ -2981,6 +3355,7 @@
     fromDaysAgo,
     toDaysAgo
   ) {
+
     const from =
       Storage.todayStr(
         -fromDaysAgo
@@ -2991,19 +3366,23 @@
         -toDaysAgo
       );
 
+
     return entries.filter(
-      (entry) =>
+      entry =>
         entry.date >= from &&
         entry.date <= to
     );
   }
 
 
-  function shortLabel(dateStr) {
+  function shortLabel(dateString) {
+
     const date =
       new Date(
-        `${dateStr}T00:00:00`
+        dateString +
+        'T00:00:00'
       );
+
 
     return date.toLocaleDateString(
       undefined,
@@ -3015,9 +3394,11 @@
   }
 
 
-  function formatDate(dateStr) {
+  function formatDate(dateString) {
+
     return new Date(
-      `${dateStr}T00:00:00`
+      dateString +
+      'T00:00:00'
     ).toLocaleDateString(
       undefined,
       {
@@ -3029,18 +3410,29 @@
   }
 
 
+  /* ==========================================================
+     SECURITY / TEXT HELPERS
+     ========================================================== */
+
   function escapeHtml(value) {
-    return String(value).replace(
-      /[&<>"']/g,
-      (match) =>
-        ({
+
+    return String(value)
+      .replace(
+        /[&<>"']/g,
+        character => ({
+
           '&': '&amp;',
+
           '<': '&lt;',
+
           '>': '&gt;',
+
           '"': '&quot;',
+
           "'": '&#39;'
-        }[match])
-    );
+
+        }[character])
+      );
   }
 
 
@@ -3048,111 +3440,125 @@
     hex,
     alpha
   ) {
-    const cleanHex =
-      hex.replace(
-        '#',
-        ''
-      );
 
-    const r =
+    const clean =
+      hex.replace('#', '');
+
+
+    const red =
       parseInt(
-        cleanHex.substring(0, 2),
+        clean.substring(0, 2),
         16
       );
 
-    const g =
+
+    const green =
       parseInt(
-        cleanHex.substring(2, 4),
+        clean.substring(2, 4),
         16
       );
 
-    const b =
+
+    const blue =
       parseInt(
-        cleanHex.substring(4, 6),
+        clean.substring(4, 6),
         16
       );
 
-    return `rgba(${r},${g},${b},${alpha})`;
+
+    return `
+      rgba(
+        ${red},
+        ${green},
+        ${blue},
+        ${alpha}
+      )
+    `;
   }
 
 
-  /* ============================================================
+  function setText(
+    selector,
+    value
+  ) {
+
+    const element =
+      $(selector);
+
+    if (element) {
+      element.textContent =
+        value;
+    }
+  }
+
+
+  /* ==========================================================
      RENDER EVERYTHING
-  ============================================================ */
+     ========================================================== */
 
   function renderAll() {
+
     renderDashboard();
+
     renderAnalytics();
+
     renderHistory();
+
     renderAchievements();
+
     prepareCheckinForm();
   }
 
 
-  /* ============================================================
+  /* ==========================================================
      INITIALIZATION
-  ============================================================ */
+     ========================================================== */
 
   document.addEventListener(
     'DOMContentLoaded',
     () => {
 
-      /*
-        Theme
-      */
+      /* ======================================================
+         FORCE WELLTRACK BLACK + PURPLE THEME
+         ====================================================== */
 
-      const theme =
-        Storage.getTheme();
+      applyWellTrackTheme();
 
-      document.documentElement
-        .setAttribute(
-          'data-theme',
-          theme
-        );
 
-      const themeIcon =
-        $('#theme-toggle i');
+      /* ======================================================
+         THEME BUTTON
 
-      if (themeIcon) {
-        themeIcon.className =
-          theme === 'dark'
-            ? 'fa-solid fa-sun'
-            : 'fa-solid fa-moon';
-      }
-
+         If the old HTML still contains the button,
+         clicking it does nothing because WellTrack now
+         uses the permanent black + purple theme.
+         ====================================================== */
 
       const themeButton =
         $('#theme-toggle');
 
       if (themeButton) {
+
         themeButton.addEventListener(
           'click',
           () => {
-            const current =
-              document.documentElement
-                .getAttribute(
-                  'data-theme'
-                );
 
-            const next =
-              current === 'dark'
-                ? 'light'
-                : 'dark';
-
-            Storage.saveTheme(next);
-
-            applyTheme(next);
+            toast(
+              'WellTrack uses the black + purple theme.',
+              'info',
+              'fa-palette'
+            );
           }
         );
       }
 
 
-      /*
-        Navigation
-      */
+      /* ======================================================
+         NAVIGATION
+         ====================================================== */
 
       $$('.tab').forEach(
-        (tab) => {
+        tab => {
+
           tab.addEventListener(
             'click',
             () =>
@@ -3164,19 +3570,22 @@
       );
 
 
-      /*
-        Buttons using data-goto
-      */
+      /* ======================================================
+         DATA-GOTO BUTTONS
+         ====================================================== */
 
       document.body.addEventListener(
         'click',
-        (event) => {
+        event => {
+
           const button =
             event.target.closest(
               '[data-goto]'
             );
 
+
           if (!button) return;
+
 
           switchView(
             button.dataset.goto
@@ -3185,28 +3594,32 @@
       );
 
 
-      /*
-        Bind functionality
-      */
+      /* ======================================================
+         BIND FEATURES
+         ====================================================== */
 
       bindProfile();
+
       bindCheckin();
+
       bindAnalytics();
+
       bindHistory();
 
 
-      /*
-        Create/migrate profile
-      */
+      /* ======================================================
+         PROFILE
+         ====================================================== */
 
-      getOrCreateProfile();
+      checkProfile();
 
 
-      /*
-        Initial render
-      */
+      /* ======================================================
+         INITIAL RENDER
+         ====================================================== */
 
       renderAll();
+
     }
   );
 
