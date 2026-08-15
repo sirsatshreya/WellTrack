@@ -1,27 +1,136 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>seed</title></head><body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WellTrack Seed Data</title>
+</head>
+
+<body>
 <script src="js/storage.js"></script>
 <script src="js/burnout.js"></script>
+
 <script>
-// Seed profile + 20 days of varied entries, then open the app
-localStorage.clear();
-Storage.saveProfile({ name: 'Priya Sharma', course: 'B.Tech CSE', year: '3rd Year', studyGoal: 5, createdAt: Date.now() });
-const rand = (a,b)=>Math.round((a+Math.random()*(b-a))*2)/2;
-for (let i = 19; i >= 0; i--) {
-  if (i === 5 || i === 12) continue; // skip days to test gaps
-  const e = {
-    date: Storage.todayStr(-i),
-    mood: Math.max(1, Math.min(5, Math.round(3 + Math.sin(i/3)*1.6))),
-    stress: Math.max(1, Math.min(10, Math.round(5 + Math.cos(i/2.5)*3))),
-    motivation: Math.max(1, Math.min(10, Math.round(6 + Math.sin(i/4)*3))),
-    sleep: rand(4.5, 9),
-    study: rand(2, 11),
-    notes: i % 4 === 0 ? 'Exam prep was intense today, felt tired after DSA practice.' : ''
+/*
+  ============================================================
+  WellTrack — Demo / Seed Data
+  ------------------------------------------------------------
+  Creates:
+    • Demo student profile
+    • 20 days of realistic check-in data
+    • Intentional missing days to test streaks/history
+    • Burnout scores + categories
+  ============================================================
+*/
+
+(() => {
+  'use strict';
+
+  /* ----------------------------------------------------------
+     Clear existing WellTrack data only
+     ---------------------------------------------------------- */
+  [
+    'welltrack_profile',
+    'welltrack_entries',
+    'welltrack_achievements',
+    'welltrack_theme'
+  ].forEach(key => localStorage.removeItem(key));
+
+  /* ----------------------------------------------------------
+     Demo profile
+     ---------------------------------------------------------- */
+  Storage.saveProfile({
+    name: 'Priya Sharma',
+    course: 'B.Tech CSE',
+    year: '3rd Year',
+    studyGoal: 5,
+    createdAt: Date.now()
+  });
+
+  /* ----------------------------------------------------------
+     Helpers
+     ---------------------------------------------------------- */
+  const randomDecimal = (min, max) => {
+    return Math.round((min + Math.random() * (max - min)) * 2) / 2;
   };
-  e.score = Burnout.computeScore(e);
-  e.category = Burnout.categorize(e.score);
-  Storage.upsertEntry(e);
-}
-location.replace('index.html');
+
+  const clamp = (value, min, max) => {
+    return Math.max(min, Math.min(max, value));
+  };
+
+  /* ----------------------------------------------------------
+     Generate 20 days of varied data
+     ---------------------------------------------------------- */
+  for (let i = 19; i >= 0; i--) {
+
+    /*
+      Skip two days intentionally.
+      This allows History, streak and consistency
+      calculations to be tested properly.
+    */
+    if (i === 5 || i === 12) continue;
+
+    const entry = {
+      date: Storage.todayStr(-i),
+
+      /* Mood: 1–5 */
+      mood: clamp(
+        Math.round(3 + Math.sin(i / 3) * 1.6),
+        1,
+        5
+      ),
+
+      /* Stress: 1–10 */
+      stress: clamp(
+        Math.round(5 + Math.cos(i / 2.5) * 3),
+        1,
+        10
+      ),
+
+      /* Motivation: 1–10 */
+      motivation: clamp(
+        Math.round(6 + Math.sin(i / 4) * 3),
+        1,
+        10
+      ),
+
+      /* Sleep: 4.5–9 hours */
+      sleep: randomDecimal(4.5, 9),
+
+      /* Study: 2–11 hours */
+      study: randomDecimal(2, 11),
+
+      /* Occasional journal entries */
+      notes:
+        i % 4 === 0
+          ? 'Exam preparation was intense today. Felt tired after DSA practice.'
+          : ''
+    };
+
+    /* --------------------------------------------------------
+       Calculate burnout score and category
+       -------------------------------------------------------- */
+    entry.score = Burnout.computeScore(entry);
+    entry.category = Burnout.categorize(entry.score);
+
+    /* --------------------------------------------------------
+       Save entry
+       -------------------------------------------------------- */
+    Storage.upsertEntry(entry);
+  }
+
+  /* ----------------------------------------------------------
+     Save default theme
+     ---------------------------------------------------------- */
+  Storage.saveTheme('dark');
+
+  /* ----------------------------------------------------------
+     Redirect to WellTrack
+     ---------------------------------------------------------- */
+  location.replace('index.html');
+
+})();
 </script>
-</body></html>
+
+</body>
+</html>
