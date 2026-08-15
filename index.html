@@ -3,348 +3,1211 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>WellTrack — Student Burnout Detection &amp; Well-Being Monitor</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+  rel="stylesheet"
+>
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"
+>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<!-- ============ ONBOARDING / PROFILE SETUP MODAL ============ -->
-<!-- ==================== LOGIN SECTION ==================== -->
-<section id="login-section" class="login-section">
+<!-- ============================================================
+     APP SHELL
+============================================================ -->
 
-  <div class="login-card">
-
-    <div class="login-icon">
-      <i class="fa-solid fa-heart-pulse"></i>
-    </div>
-
-    <h1>Welcome to WellTrack</h1>
-    <p class="login-subtitle">
-      Track your well-being. Understand yourself. Stay balanced.
-    </p>
-
-    <form id="login-form">
-
-      <div class="form-group">
-        <label for="login-email">Email</label>
-        <input
-          type="email"
-          id="login-email"
-          name="email"
-          required
-        >
-      </div>
-
-      <div class="form-group">
-        <label for="login-password">Password</label>
-        <input
-          type="password"
-          id="login-password"
-          name="password"
-          required
-        >
-      </div>
-
-      <div class="login-options">
-        <label class="remember-me">
-          <input type="checkbox" id="remember-me">
-          <span>Remember me</span>
-        </label>
-
-        <button type="button" id="forgot-password">
-          Forgot password?
-        </button>
-      </div>
-
-      <button type="submit" class="btn btn-primary login-btn">
-        <i class="fa-solid fa-right-to-bracket"></i>
-        Login
-      </button>
-
-    </form>
-
-    <p class="signup-text">
-      New to WellTrack?
-      <button type="button" id="create-account">
-        Create account
-      </button>
-    </p>
-
-  </div>
-
-</section>
-
-<!-- ============ APP SHELL ============ -->
 <div id="app-shell" class="app-shell">
 
+  <!-- ================= TOPBAR ================= -->
+
   <header class="topbar">
+
     <div class="topbar-brand">
-      <span class="brand-logo"><i class="fa-solid fa-brain"></i></span>
+
+      <span class="brand-logo">
+        <i class="fa-solid fa-brain"></i>
+      </span>
+
       <div>
         <h1>WellTrack</h1>
-        <p class="brand-tag">Burnout Detection &amp; Well-Being Monitor</p>
+        <p class="brand-tag">
+          Burnout Detection &amp; Well-Being Monitor
+        </p>
       </div>
+
     </div>
+
     <div class="topbar-actions">
-      <span id="streak-pill" class="streak-pill" title="Current check-in streak"><i class="fa-solid fa-fire"></i> <span id="streak-count">0</span></span>
-      <button id="theme-toggle" class="icon-btn" title="Toggle light / dark theme" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i></button>
-      <button id="profile-btn" class="icon-btn" title="Edit profile" aria-label="Edit profile"><i class="fa-solid fa-user"></i></button>
+
+      <span
+        id="streak-pill"
+        class="streak-pill"
+        title="Current check-in streak"
+      >
+        <i class="fa-solid fa-fire"></i>
+        <span id="streak-count">0</span>
+      </span>
+
+      <button
+        id="theme-toggle"
+        class="icon-btn"
+        title="Toggle light / dark theme"
+        aria-label="Toggle theme"
+      >
+        <i class="fa-solid fa-moon"></i>
+      </button>
+
+      <button
+        id="profile-btn"
+        class="icon-btn"
+        title="View profile"
+        aria-label="View profile"
+      >
+        <i class="fa-solid fa-user"></i>
+      </button>
+
     </div>
+
   </header>
 
-  <nav class="tabs" role="tablist" aria-label="Main sections">
-    <button class="tab active" data-view="dashboard" role="tab"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></button>
-    <button class="tab" data-view="checkin" role="tab"><i class="fa-solid fa-clipboard-check"></i><span>Check-In</span></button>
-    <button class="tab" data-view="analytics" role="tab"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></button>
-    <button class="tab" data-view="history" role="tab"><i class="fa-solid fa-clock-rotate-left"></i><span>History</span></button>
-    <button class="tab" data-view="achievements" role="tab"><i class="fa-solid fa-trophy"></i><span>Achievements</span></button>
+
+  <!-- ================= NAVIGATION ================= -->
+
+  <nav
+    class="tabs"
+    role="tablist"
+    aria-label="Main sections"
+  >
+
+    <button
+      class="tab active"
+      data-view="dashboard"
+      role="tab"
+    >
+      <i class="fa-solid fa-gauge-high"></i>
+      <span>Dashboard</span>
+    </button>
+
+    <button
+      class="tab"
+      data-view="checkin"
+      role="tab"
+    >
+      <i class="fa-solid fa-clipboard-check"></i>
+      <span>Check-In</span>
+    </button>
+
+    <button
+      class="tab"
+      data-view="analytics"
+      role="tab"
+    >
+      <i class="fa-solid fa-chart-line"></i>
+      <span>Analytics</span>
+    </button>
+
+    <button
+      class="tab"
+      data-view="history"
+      role="tab"
+    >
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      <span>History</span>
+    </button>
+
+    <button
+      class="tab"
+      data-view="achievements"
+      role="tab"
+    >
+      <i class="fa-solid fa-trophy"></i>
+      <span>Achievements</span>
+    </button>
+
   </nav>
+
+
+  <!-- ================= MAIN CONTENT ================= -->
 
   <main class="main-content">
 
-    <!-- ================= DASHBOARD ================= -->
+
+    <!-- ========================================================
+         DASHBOARD
+    ========================================================= -->
+
     <section id="view-dashboard" class="view active">
+
       <div class="greeting-row">
+
         <div>
           <h2 id="greeting-text">Hello!</h2>
-          <p id="greeting-sub" class="muted">Track how you feel today.</p>
+
+          <p id="greeting-sub" class="muted">
+            Track how you feel today.
+          </p>
         </div>
-        <button class="btn btn-primary" data-goto="checkin"><i class="fa-solid fa-plus"></i> Daily Check-In</button>
+
+        <button
+          class="btn btn-primary"
+          data-goto="checkin"
+        >
+          <i class="fa-solid fa-plus"></i>
+          Daily Check-In
+        </button>
+
       </div>
 
-      <div id="risk-alert" class="risk-alert hidden" role="alert"></div>
+
+      <!-- Risk Alert -->
+
+      <div
+        id="risk-alert"
+        class="risk-alert hidden"
+        role="alert"
+      ></div>
+
 
       <div class="dash-grid">
-        <article class="card burnout-card" id="burnout-card">
-          <h3><i class="fa-solid fa-fire-flame-curved"></i> Burnout Risk Score</h3>
+
+
+        <!-- Burnout Risk -->
+
+        <article
+          class="card burnout-card"
+          id="burnout-card"
+        >
+
+          <h3>
+            <i class="fa-solid fa-fire-flame-curved"></i>
+            Burnout Risk Score
+          </h3>
+
           <div class="gauge-wrap">
-            <div class="gauge-chart-box"><canvas id="gauge-chart"></canvas></div>
-            <div class="gauge-center">
-              <span id="burnout-score-value">–</span>
-              <span id="burnout-category" class="category-badge">No data</span>
+
+            <div class="gauge-chart-box">
+              <canvas id="gauge-chart"></canvas>
             </div>
+
+            <div class="gauge-center">
+
+              <span id="burnout-score-value">
+                –
+              </span>
+
+              <span
+                id="burnout-category"
+                class="category-badge"
+              >
+                No data
+              </span>
+
+            </div>
+
           </div>
-          <p id="burnout-explain" class="muted small">Complete a daily check-in to compute your burnout risk.</p>
+
+          <p
+            id="burnout-explain"
+            class="muted small"
+          >
+            Complete a daily check-in to compute your burnout risk.
+          </p>
+
         </article>
 
+
+        <!-- Today's Snapshot -->
+
         <article class="card">
-          <h3><i class="fa-solid fa-heart-pulse"></i> Today's Snapshot</h3>
-          <div class="stat-grid" id="snapshot-grid">
-            <div class="stat"><span class="stat-icon mood">😐</span><span class="stat-label">Mood</span><span class="stat-value" id="snap-mood">–</span></div>
-            <div class="stat"><span class="stat-icon"><i class="fa-solid fa-bolt"></i></span><span class="stat-label">Stress</span><span class="stat-value" id="snap-stress">–</span></div>
-            <div class="stat"><span class="stat-icon"><i class="fa-solid fa-bed"></i></span><span class="stat-label">Sleep</span><span class="stat-value" id="snap-sleep">–</span></div>
-            <div class="stat"><span class="stat-icon"><i class="fa-solid fa-book-open"></i></span><span class="stat-label">Study</span><span class="stat-value" id="snap-study">–</span></div>
-            <div class="stat"><span class="stat-icon"><i class="fa-solid fa-fire"></i></span><span class="stat-label">Motivation</span><span class="stat-value" id="snap-motivation">–</span></div>
-            <div class="stat"><span class="stat-icon"><i class="fa-solid fa-calendar-check"></i></span><span class="stat-label">Check-ins</span><span class="stat-value" id="snap-total">0</span></div>
+
+          <h3>
+            <i class="fa-solid fa-heart-pulse"></i>
+            Today's Snapshot
+          </h3>
+
+          <div
+            class="stat-grid"
+            id="snapshot-grid"
+          >
+
+            <div class="stat">
+              <span class="stat-icon mood">😐</span>
+              <span class="stat-label">Mood</span>
+              <span
+                class="stat-value"
+                id="snap-mood"
+              >–</span>
+            </div>
+
+            <div class="stat">
+              <span class="stat-icon">
+                <i class="fa-solid fa-bolt"></i>
+              </span>
+              <span class="stat-label">Stress</span>
+              <span
+                class="stat-value"
+                id="snap-stress"
+              >–</span>
+            </div>
+
+            <div class="stat">
+              <span class="stat-icon">
+                <i class="fa-solid fa-bed"></i>
+              </span>
+              <span class="stat-label">Sleep</span>
+              <span
+                class="stat-value"
+                id="snap-sleep"
+              >–</span>
+            </div>
+
+            <div class="stat">
+              <span class="stat-icon">
+                <i class="fa-solid fa-book-open"></i>
+              </span>
+              <span class="stat-label">Study</span>
+              <span
+                class="stat-value"
+                id="snap-study"
+              >–</span>
+            </div>
+
+            <div class="stat">
+              <span class="stat-icon">
+                <i class="fa-solid fa-fire"></i>
+              </span>
+              <span class="stat-label">Motivation</span>
+              <span
+                class="stat-value"
+                id="snap-motivation"
+              >–</span>
+            </div>
+
+            <div class="stat">
+              <span class="stat-icon">
+                <i class="fa-solid fa-calendar-check"></i>
+              </span>
+              <span class="stat-label">Check-ins</span>
+              <span
+                class="stat-value"
+                id="snap-total"
+              >0</span>
+            </div>
+
           </div>
+
         </article>
+
+
+        <!-- Recommendations -->
 
         <article class="card recommendations-card">
-          <h3><i class="fa-solid fa-lightbulb"></i> Personalized Recommendations</h3>
-          <ul id="recommendations-list" class="rec-list">
-            <li class="rec-item info"><i class="fa-solid fa-circle-info"></i> Start your first check-in to get personalized advice.</li>
+
+          <h3>
+            <i class="fa-solid fa-lightbulb"></i>
+            Personalized Recommendations
+          </h3>
+
+          <ul
+            id="recommendations-list"
+            class="rec-list"
+          >
+
+            <li class="rec-item info">
+              <i class="fa-solid fa-circle-info"></i>
+              Start your first check-in to get personalized advice.
+            </li>
+
           </ul>
+
         </article>
 
-        <article class="card">
-          <h3><i class="fa-solid fa-chart-area"></i> Burnout Trend (last 14 days)</h3>
-          <div class="chart-box" style="height:220px;"><canvas id="mini-trend-chart"></canvas></div>
-        </article>
+
+        <!-- Burnout Trend -->
 
         <article class="card">
-          <h3><i class="fa-solid fa-medal"></i> Progress &amp; Consistency</h3>
-          <div class="progress-stats">
-            <div class="pstat"><span id="p-current-streak">0</span><label>Current streak</label></div>
-            <div class="pstat"><span id="p-longest-streak">0</span><label>Longest streak</label></div>
-            <div class="pstat"><span id="p-total-checkins">0</span><label>Total check-ins</label></div>
-            <div class="pstat"><span id="p-consistency">0%</span><label>30-day consistency</label></div>
+
+          <h3>
+            <i class="fa-solid fa-chart-area"></i>
+            Burnout Trend (last 14 days)
+          </h3>
+
+          <div
+            class="chart-box"
+            style="height:220px;"
+          >
+            <canvas id="mini-trend-chart"></canvas>
           </div>
-          <div class="week-dots" id="week-dots" aria-label="Last 7 days check-in status"></div>
+
         </article>
+
+
+        <!-- Progress -->
+
+        <article class="card">
+
+          <h3>
+            <i class="fa-solid fa-medal"></i>
+            Progress &amp; Consistency
+          </h3>
+
+          <div class="progress-stats">
+
+            <div class="pstat">
+              <span id="p-current-streak">0</span>
+              <label>Current streak</label>
+            </div>
+
+            <div class="pstat">
+              <span id="p-longest-streak">0</span>
+              <label>Longest streak</label>
+            </div>
+
+            <div class="pstat">
+              <span id="p-total-checkins">0</span>
+              <label>Total check-ins</label>
+            </div>
+
+            <div class="pstat">
+              <span id="p-consistency">0%</span>
+              <label>30-day consistency</label>
+            </div>
+
+          </div>
+
+          <div
+            class="week-dots"
+            id="week-dots"
+            aria-label="Last 7 days check-in status"
+          ></div>
+
+        </article>
+
       </div>
+
     </section>
 
-    <!-- ================= CHECK-IN ================= -->
-    <section id="view-checkin" class="view">
-      <div class="card form-card">
-        <h2><i class="fa-solid fa-clipboard-check"></i> Daily Well-Being Check-In</h2>
-        <p class="muted" id="checkin-date-label"></p>
-        <div id="already-checked-banner" class="info-banner hidden"><i class="fa-solid fa-circle-check"></i> You already checked in today — submitting again will update today's entry.</div>
 
-        <form id="checkin-form" autocomplete="off">
+    <!-- ========================================================
+         CHECK-IN
+    ========================================================= -->
+
+    <section id="view-checkin" class="view">
+
+      <div class="card form-card">
+
+        <h2>
+          <i class="fa-solid fa-clipboard-check"></i>
+          Daily Well-Being Check-In
+        </h2>
+
+        <p
+          class="muted"
+          id="checkin-date-label"
+        ></p>
+
+        <div
+          id="already-checked-banner"
+          class="info-banner hidden"
+        >
+          <i class="fa-solid fa-circle-check"></i>
+          You already checked in today — submitting again will update today's entry.
+        </div>
+
+
+        <form
+          id="checkin-form"
+          autocomplete="off"
+        >
+
+          <!-- Mood -->
+
           <fieldset>
-            <legend>How is your mood today?</legend>
-            <div class="mood-row" id="mood-row">
-              <label class="mood-opt"><input type="radio" name="mood" value="1" required><span>😞</span><small>Very Low</small></label>
-              <label class="mood-opt"><input type="radio" name="mood" value="2"><span>🙁</span><small>Low</small></label>
-              <label class="mood-opt"><input type="radio" name="mood" value="3"><span>😐</span><small>Okay</small></label>
-              <label class="mood-opt"><input type="radio" name="mood" value="4"><span>🙂</span><small>Good</small></label>
-              <label class="mood-opt"><input type="radio" name="mood" value="5"><span>😄</span><small>Great</small></label>
+
+            <legend>
+              How is your mood today?
+            </legend>
+
+            <div
+              class="mood-row"
+              id="mood-row"
+            >
+
+              <label class="mood-opt">
+                <input
+                  type="radio"
+                  name="mood"
+                  value="1"
+                  required
+                >
+                <span>😞</span>
+                <small>Very Low</small>
+              </label>
+
+              <label class="mood-opt">
+                <input
+                  type="radio"
+                  name="mood"
+                  value="2"
+                >
+                <span>🙁</span>
+                <small>Low</small>
+              </label>
+
+              <label class="mood-opt">
+                <input
+                  type="radio"
+                  name="mood"
+                  value="3"
+                >
+                <span>😐</span>
+                <small>Okay</small>
+              </label>
+
+              <label class="mood-opt">
+                <input
+                  type="radio"
+                  name="mood"
+                  value="4"
+                >
+                <span>🙂</span>
+                <small>Good</small>
+              </label>
+
+              <label class="mood-opt">
+                <input
+                  type="radio"
+                  name="mood"
+                  value="5"
+                >
+                <span>😄</span>
+                <small>Great</small>
+              </label>
+
             </div>
+
           </fieldset>
 
-          <div class="slider-group">
-            <label for="in-stress">Stress level <output id="out-stress">5</output>/10</label>
-            <input type="range" id="in-stress" min="1" max="10" value="5" step="1">
-            <div class="range-hints"><span>Calm</span><span>Overwhelmed</span></div>
-          </div>
+
+          <!-- Stress -->
 
           <div class="slider-group">
-            <label for="in-motivation">Motivation level <output id="out-motivation">5</output>/10</label>
-            <input type="range" id="in-motivation" min="1" max="10" value="5" step="1">
-            <div class="range-hints"><span>Drained</span><span>Driven</span></div>
+
+            <label for="in-stress">
+              Stress level
+              <output id="out-stress">5</output>/10
+            </label>
+
+            <input
+              type="range"
+              id="in-stress"
+              min="1"
+              max="10"
+              value="5"
+              step="1"
+            >
+
+            <div class="range-hints">
+              <span>Calm</span>
+              <span>Overwhelmed</span>
+            </div>
+
           </div>
+
+
+          <!-- Motivation -->
+
+          <div class="slider-group">
+
+            <label for="in-motivation">
+              Motivation level
+              <output id="out-motivation">5</output>/10
+            </label>
+
+            <input
+              type="range"
+              id="in-motivation"
+              min="1"
+              max="10"
+              value="5"
+              step="1"
+            >
+
+            <div class="range-hints">
+              <span>Drained</span>
+              <span>Driven</span>
+            </div>
+
+          </div>
+
+
+          <!-- Sleep + Study -->
 
           <div class="two-col">
+
             <div class="field">
-              <label for="in-sleep"><i class="fa-solid fa-bed"></i> Sleep last night (hours)</label>
-              <input type="number" id="in-sleep" min="0" max="16" step="0.5" value="7" required>
+
+              <label for="in-sleep">
+                <i class="fa-solid fa-bed"></i>
+                Sleep last night (hours)
+              </label>
+
+              <input
+                type="number"
+                id="in-sleep"
+                min="0"
+                max="16"
+                step="0.5"
+                value="7"
+                required
+              >
+
             </div>
+
+
             <div class="field">
-              <label for="in-study"><i class="fa-solid fa-book-open"></i> Study hours today</label>
-              <input type="number" id="in-study" min="0" max="18" step="0.5" value="4" required>
+
+              <label for="in-study">
+                <i class="fa-solid fa-book-open"></i>
+                Study hours today
+              </label>
+
+              <input
+                type="number"
+                id="in-study"
+                min="0"
+                max="18"
+                step="0.5"
+                value="4"
+                required
+              >
+
             </div>
+
           </div>
+
+
+          <!-- Notes -->
 
           <div class="field">
-            <label for="in-notes"><i class="fa-solid fa-pen"></i> Notes (optional)</label>
-            <textarea id="in-notes" rows="3" maxlength="500" placeholder="Anything on your mind — exams, deadlines, wins…"></textarea>
+
+            <label for="in-notes">
+              <i class="fa-solid fa-pen"></i>
+              Notes (optional)
+            </label>
+
+            <textarea
+              id="in-notes"
+              rows="3"
+              maxlength="500"
+            ></textarea>
+
           </div>
 
-          <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-floppy-disk"></i> Save Check-In</button>
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block"
+          >
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save Check-In
+          </button>
+
         </form>
+
       </div>
 
-      <div id="checkin-result" class="card result-card hidden"></div>
+
+      <div
+        id="checkin-result"
+        class="card result-card hidden"
+      ></div>
+
     </section>
 
-    <!-- ================= ANALYTICS ================= -->
+
+    <!-- ========================================================
+         ANALYTICS
+    ========================================================= -->
+
     <section id="view-analytics" class="view">
+
       <div class="analytics-header">
-        <h2><i class="fa-solid fa-chart-line"></i> Analytics &amp; Trends</h2>
-        <div class="range-switch" role="group" aria-label="Time range">
-          <button class="range-btn active" data-range="7">7 days</button>
-          <button class="range-btn" data-range="30">30 days</button>
-          <button class="range-btn" data-range="90">90 days</button>
+
+        <h2>
+          <i class="fa-solid fa-chart-line"></i>
+          Analytics &amp; Trends
+        </h2>
+
+        <div
+          class="range-switch"
+          role="group"
+          aria-label="Time range"
+        >
+
+          <button
+            class="range-btn active"
+            data-range="7"
+          >
+            7 days
+          </button>
+
+          <button
+            class="range-btn"
+            data-range="30"
+          >
+            30 days
+          </button>
+
+          <button
+            class="range-btn"
+            data-range="90"
+          >
+            90 days
+          </button>
+
         </div>
+
       </div>
 
-      <div id="analytics-empty" class="empty-state hidden">
+
+      <div
+        id="analytics-empty"
+        class="empty-state hidden"
+      >
         <i class="fa-solid fa-chart-simple"></i>
-        <p>No data yet. Complete daily check-ins to unlock trend analytics.</p>
+
+        <p>
+          No data yet. Complete daily check-ins to unlock trend analytics.
+        </p>
       </div>
+
 
       <div id="analytics-content">
-        <div class="summary-cards" id="summary-cards"></div>
+
+        <div
+          class="summary-cards"
+          id="summary-cards"
+        ></div>
+
 
         <div class="chart-grid">
-          <article class="card"><h3>Burnout Score Trend</h3><div class="chart-box" style="height:260px;"><canvas id="chart-burnout"></canvas></div></article>
-          <article class="card"><h3>Mood &amp; Motivation</h3><div class="chart-box" style="height:260px;"><canvas id="chart-mood"></canvas></div></article>
-          <article class="card"><h3>Sleep vs Study Hours</h3><div class="chart-box" style="height:260px;"><canvas id="chart-sleep-study"></canvas></div></article>
-          <article class="card"><h3>Stress Level</h3><div class="chart-box" style="height:260px;"><canvas id="chart-stress"></canvas></div></article>
+
+          <article class="card">
+
+            <h3>Burnout Score Trend</h3>
+
+            <div
+              class="chart-box"
+              style="height:260px;"
+            >
+              <canvas id="chart-burnout"></canvas>
+            </div>
+
+          </article>
+
+
+          <article class="card">
+
+            <h3>Mood &amp; Motivation</h3>
+
+            <div
+              class="chart-box"
+              style="height:260px;"
+            >
+              <canvas id="chart-mood"></canvas>
+            </div>
+
+          </article>
+
+
+          <article class="card">
+
+            <h3>Sleep vs Study Hours</h3>
+
+            <div
+              class="chart-box"
+              style="height:260px;"
+            >
+              <canvas id="chart-sleep-study"></canvas>
+            </div>
+
+          </article>
+
+
+          <article class="card">
+
+            <h3>Stress Level</h3>
+
+            <div
+              class="chart-box"
+              style="height:260px;"
+            >
+              <canvas id="chart-stress"></canvas>
+            </div>
+
+          </article>
+
         </div>
+
+
+        <!-- Summary -->
 
         <article class="card">
-          <h3><i class="fa-solid fa-calendar-week"></i> Weekly &amp; Monthly Summary</h3>
+
+          <h3>
+            <i class="fa-solid fa-calendar-week"></i>
+            Weekly &amp; Monthly Summary
+          </h3>
+
           <div class="summary-tables">
+
             <div>
+
               <h4>This Week vs Last Week</h4>
-              <table class="summary-table" id="weekly-table"></table>
+
+              <table
+                class="summary-table"
+                id="weekly-table"
+              ></table>
+
             </div>
+
+
             <div>
+
               <h4>This Month vs Last Month</h4>
-              <table class="summary-table" id="monthly-table"></table>
+
+              <table
+                class="summary-table"
+                id="monthly-table"
+              ></table>
+
             </div>
+
           </div>
-          <div id="behavior-changes" class="behavior-changes"></div>
+
+
+          <div
+            id="behavior-changes"
+            class="behavior-changes"
+          ></div>
+
         </article>
+
       </div>
+
     </section>
 
-    <!-- ================= HISTORY ================= -->
+
+    <!-- ========================================================
+         HISTORY
+    ========================================================= -->
+
     <section id="view-history" class="view">
+
       <div class="card">
-        <h2><i class="fa-solid fa-clock-rotate-left"></i> Check-In History</h2>
+
+        <h2>
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          Check-In History
+        </h2>
+
+
         <div class="history-controls">
+
+
           <div class="search-box">
+
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="search" id="history-search" placeholder="Search notes, dates…" aria-label="Search history">
+
+            <input
+              type="search"
+              id="history-search"
+              aria-label="Search history"
+            >
+
           </div>
-          <select id="history-filter-risk" aria-label="Filter by risk">
-            <option value="">All risk levels</option>
-            <option value="Healthy">Healthy</option>
-            <option value="Moderate Risk">Moderate Risk</option>
-            <option value="High Risk">High Risk</option>
+
+
+          <select
+            id="history-filter-risk"
+            aria-label="Filter by risk"
+          >
+
+            <option value="">
+              All risk levels
+            </option>
+
+            <option value="Healthy">
+              Healthy
+            </option>
+
+            <option value="Moderate Risk">
+              Moderate Risk
+            </option>
+
+            <option value="High Risk">
+              High Risk
+            </option>
+
           </select>
-          <select id="history-filter-mood" aria-label="Filter by mood">
-            <option value="">All moods</option>
-            <option value="1">😞 Very Low</option><option value="2">🙁 Low</option>
-            <option value="3">😐 Okay</option><option value="4">🙂 Good</option><option value="5">😄 Great</option>
+
+
+          <select
+            id="history-filter-mood"
+            aria-label="Filter by mood"
+          >
+
+            <option value="">
+              All moods
+            </option>
+
+            <option value="1">
+              😞 Very Low
+            </option>
+
+            <option value="2">
+              🙁 Low
+            </option>
+
+            <option value="3">
+              😐 Okay
+            </option>
+
+            <option value="4">
+              🙂 Good
+            </option>
+
+            <option value="5">
+              😄 Great
+            </option>
+
           </select>
+
+
           <div class="export-btns">
-            <button id="export-json" class="btn btn-ghost" title="Export as JSON"><i class="fa-solid fa-file-code"></i> JSON</button>
-            <button id="export-csv" class="btn btn-ghost" title="Export as CSV"><i class="fa-solid fa-file-csv"></i> CSV</button>
+
+            <button
+              id="export-json"
+              class="btn btn-ghost"
+              title="Export as JSON"
+            >
+              <i class="fa-solid fa-file-code"></i>
+              JSON
+            </button>
+
+            <button
+              id="export-csv"
+              class="btn btn-ghost"
+              title="Export as CSV"
+            >
+              <i class="fa-solid fa-file-csv"></i>
+              CSV
+            </button>
+
           </div>
+
         </div>
-        <div id="history-list" class="history-list"></div>
-        <div id="history-empty" class="empty-state hidden">
-          <i class="fa-solid fa-inbox"></i><p>No records match. Try adjusting your search or filters.</p>
+
+
+        <div
+          id="history-list"
+          class="history-list"
+        ></div>
+
+
+        <div
+          id="history-empty"
+          class="empty-state hidden"
+        >
+
+          <i class="fa-solid fa-inbox"></i>
+
+          <p>
+            No records match. Try adjusting your search or filters.
+          </p>
+
         </div>
+
       </div>
+
     </section>
 
-    <!-- ================= ACHIEVEMENTS ================= -->
-    <section id="view-achievements" class="view">
+
+    <!-- ========================================================
+         ACHIEVEMENTS
+    ========================================================= -->
+
+    <section
+      id="view-achievements"
+      class="view"
+    >
+
       <div class="card">
-        <h2><i class="fa-solid fa-trophy"></i> Achievements &amp; Badges</h2>
-        <p class="muted">Earn badges by checking in consistently and building healthy habits.</p>
-        <div class="ach-progress-bar"><div id="ach-progress-fill"></div></div>
-        <p id="ach-progress-text" class="muted small"></p>
-        <div id="badges-grid" class="badges-grid"></div>
+
+        <h2>
+          <i class="fa-solid fa-trophy"></i>
+          Achievements &amp; Badges
+        </h2>
+
+        <p class="muted">
+          Earn badges by checking in consistently and building healthy habits.
+        </p>
+
+
+        <div class="ach-progress-bar">
+
+          <div
+            id="ach-progress-fill"
+          ></div>
+
+        </div>
+
+
+        <p
+          id="ach-progress-text"
+          class="muted small"
+        ></p>
+
+
+        <div
+          id="badges-grid"
+          class="badges-grid"
+        ></div>
+
       </div>
+
     </section>
 
   </main>
 
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================ -->
+
   <footer class="footer">
-    <p><i class="fa-solid fa-lock"></i> All your data stays private in this browser (LocalStorage). Nothing is uploaded.</p>
-    <p class="muted small">WellTrack is a self-monitoring tool, not a medical diagnosis. If you feel persistently overwhelmed, please reach out to a counselor.</p>
+
+    <p>
+      <i class="fa-solid fa-lock"></i>
+      All your data stays private in this browser (LocalStorage).
+      Nothing is uploaded.
+    </p>
+
+    <p class="muted small">
+      WellTrack is a self-monitoring tool, not a medical diagnosis.
+      If you feel persistently overwhelmed, please reach out to a counselor.
+    </p>
+
   </footer>
+
 </div>
 
-<!-- ============ PROFILE EDIT MODAL ============ -->
-<div id="profile-overlay" class="modal-overlay hidden" aria-hidden="true">
-  <section class="modal-card" role="dialog" aria-labelledby="profile-title">
-    <button class="modal-close" id="profile-close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
-    <h2 id="profile-title"><i class="fa-solid fa-user"></i> Your Profile</h2>
-    <form id="profile-form" autocomplete="off">
-      <label for="pf-name">Name</label>
-      <input type="text" id="pf-name" required maxlength="60">
-      <label for="pf-course">Course / Program</label>
-      <input type="text" id="pf-course" required maxlength="80">
-      <label for="pf-year">Academic Year</label>
-      <select id="pf-year" required>
-        <option>1st Year</option><option>2nd Year</option><option>3rd Year</option>
-        <option>4th Year</option><option>5th Year</option><option>Postgraduate</option><option>Other</option>
-      </select>
-      <label for="pf-goal">Daily study goal (hours)</label>
-      <input type="number" id="pf-goal" min="0" max="16" step="0.5">
-      <button type="submit" class="btn btn-primary btn-block">Save Profile</button>
-      <button type="button" id="reset-data-btn" class="btn btn-danger btn-block"><i class="fa-solid fa-trash"></i> Reset All Data</button>
+
+<!-- ============================================================
+     PROFILE MODAL
+============================================================ -->
+
+<div
+  id="profile-overlay"
+  class="modal-overlay hidden"
+  aria-hidden="true"
+>
+
+  <section
+    class="modal-card profile-modal"
+    role="dialog"
+    aria-labelledby="profile-title"
+  >
+
+
+    <!-- Close -->
+
+    <button
+      class="modal-close"
+      id="profile-close"
+      aria-label="Close profile"
+    >
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+
+    <!-- Avatar -->
+
+    <div class="profile-avatar">
+
+      <i class="fa-solid fa-user"></i>
+
+    </div>
+
+
+    <!-- Title -->
+
+    <h2 id="profile-title">
+      Your Profile
+    </h2>
+
+    <p class="muted">
+      Manage your WellTrack profile
+    </p>
+
+
+    <!-- Profile Form -->
+
+    <form
+      id="profile-form"
+      autocomplete="off"
+    >
+
+
+      <!-- Full Name -->
+
+      <div class="field">
+
+        <label for="pf-name">
+          Full Name
+        </label>
+
+        <input
+          type="text"
+          id="pf-name"
+          maxlength="60"
+          required
+        >
+
+      </div>
+
+
+      <!-- Email -->
+
+      <div class="field">
+
+        <label for="pf-email">
+          Email
+        </label>
+
+        <input
+          type="email"
+          id="pf-email"
+          maxlength="120"
+          required
+        >
+
+      </div>
+
+
+      <!-- Academic Level -->
+
+      <div class="field">
+
+        <label for="pf-year">
+          Academic Level
+        </label>
+
+        <select
+          id="pf-year"
+          required
+        >
+
+          <option value="1st Year">
+            1st Year
+          </option>
+
+          <option value="2nd Year">
+            2nd Year
+          </option>
+
+          <option value="3rd Year">
+            3rd Year
+          </option>
+
+          <option value="4th Year">
+            4th Year
+          </option>
+
+          <option value="5th Year">
+            5th Year
+          </option>
+
+          <option value="Postgraduate">
+            Postgraduate
+          </option>
+
+          <option value="Other">
+            Other
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- Save -->
+
+      <button
+        type="submit"
+        class="btn btn-primary btn-block"
+      >
+
+        <i class="fa-solid fa-floppy-disk"></i>
+        Save Profile
+
+      </button>
+
     </form>
+
+
+    <!-- Logout -->
+
+    <button
+      type="button"
+      id="logout-btn"
+      class="btn btn-danger btn-block"
+    >
+
+      <i class="fa-solid fa-right-from-bracket"></i>
+      Logout
+
+    </button>
+
+
   </section>
+
 </div>
 
-<!-- Toast notifications -->
-<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<!-- ============================================================
+     TOAST NOTIFICATIONS
+============================================================ -->
+
+<div
+  id="toast-container"
+  class="toast-container"
+  aria-live="polite"
+></div>
+
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
 
 <script src="js/storage.js"></script>
 <script src="js/burnout.js"></script>
 <script src="js/achievements.js"></script>
 <script src="js/app.js"></script>
+
 </body>
 </html>
